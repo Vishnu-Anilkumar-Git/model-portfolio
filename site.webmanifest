@@ -1,0 +1,13 @@
+{
+  "name": "Vishnu Anilkumar | Cybersecurity Portfolio",
+  "short_name": "Vishnu Anilkumar",
+  "start_url": "/",
+  "display": "standalone",
+  "theme_color": "#0B0E11",
+  "background_color": "#0B0E11",
+  "description": "Cybersecurity portfolio of Vishnu Anilkumar.",
+  "icons": [
+    { "src": "/assets/favicon/favicon-192x192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "/assets/favicon/favicon-512x512.png", "sizes": "512x512", "type": "image/png" }
+  ]
+}
