@@ -1,0 +1,60 @@
+{
+  "completed": [
+    {
+      "name": "CarePlus",
+      "description": "Hospital Appointment Booking System"
+    },
+    {
+      "name": "Kerala Tourism Website",
+      "description": "Tourism platform"
+    },
+    {
+      "name": "Precision Builders",
+      "description": "Intelligent Construction Platform"
+    }
+  ],
+  "ongoing": [
+    {
+      "name": "OffGrid",
+      "description": "E-Commerce Clothing Store"
+    },
+    {
+      "name": "ASI",
+      "description": "AI Security Platform"
+    },
+    {
+      "name": "Threat Intelligence Dashboard",
+      "description": "Threat intel"
+    },
+    {
+      "name": "JARVIS",
+      "description": "Personal AI Assistant"
+    },
+    {
+      "name": "AI-Based Property Security & Sensor Fusion",
+      "description": "Security fusion"
+    }
+  ],
+  "upcoming": [
+    {
+      "name": "CTI Platform",
+      "description": "CTI"
+    },
+    {
+      "name": "AI SOC Analyst",
+      "description": "SOC"
+    },
+    {
+      "name": "Advanced Network Security Monitoring System",
+      "description": "Network security"
+    },
+    {
+      "name": "Automated Vulnerability Assessment Platform",
+      "description": "Vuln platform"
+    },
+    {
+      "name": "AI-Powered Digital Security Lab",
+      "description": "Security lab"
+    }
+  ]
+}

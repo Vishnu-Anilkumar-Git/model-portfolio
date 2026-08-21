@@ -578,5 +578,224 @@
     });
   })();
 </script>
+<!-- Chatbot UI -->
+<style>
+  #chatbot-container {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    width: 350px;
+    height: 450px;
+    background: rgba(10, 10, 10, 0.95);
+    border: 1px solid rgba(0, 255, 128, 0.3);
+    border-radius: 12px;
+    display: none;
+    flex-direction: column;
+    z-index: 9999;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.8), 0 0 15px rgba(0, 255, 128, 0.1);
+    font-family: 'IBM Plex Mono', monospace;
+    overflow: hidden;
+  }
+  #chatbot-header {
+    background: rgba(0, 255, 128, 0.1);
+    border-bottom: 1px solid rgba(0, 255, 128, 0.2);
+    padding: 12px 15px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    color: #00ff80;
+    font-size: 0.9rem;
+    font-weight: 600;
+  }
+  #chatbot-header button {
+    background: none;
+    border: none;
+    color: #888;
+    cursor: pointer;
+    font-size: 1.2rem;
+    transition: color 0.2s;
+  }
+  #chatbot-header button:hover {
+    color: #fff;
+  }
+  #chatbot-messages {
+    flex: 1;
+    overflow-y: auto;
+    padding: 15px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .chat-msg {
+    max-width: 85%;
+    padding: 8px 12px;
+    border-radius: 8px;
+    font-size: 0.85rem;
+    line-height: 1.4;
+    word-wrap: break-word;
+  }
+  .chat-msg.bot {
+    background: rgba(0, 255, 128, 0.1);
+    border: 1px solid rgba(0, 255, 128, 0.2);
+    align-self: flex-start;
+    color: #e0e0e0;
+  }
+  .chat-msg.user {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    align-self: flex-end;
+    color: #fff;
+  }
+  #chatbot-input-area {
+    display: flex;
+    padding: 10px;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    background: rgba(0, 0, 0, 0.5);
+  }
+  #chatbot-input {
+    flex: 1;
+    background: none;
+    border: none;
+    color: #fff;
+    font-family: inherit;
+    font-size: 0.85rem;
+    padding: 8px;
+    outline: none;
+  }
+  #chatbot-send {
+    background: none;
+    border: none;
+    color: #00ff80;
+    cursor: pointer;
+    font-family: inherit;
+    font-weight: 600;
+    padding: 0 10px;
+    transition: color 0.2s;
+  }
+  #chatbot-send:hover {
+    color: #fff;
+  }
+  #chatbot-toggle {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    background: #00ff80;
+    color: #000;
+    border: none;
+    width: 50px;
+    height: 50px;
+    border-radius: 25px;
+    font-size: 1.5rem;
+    cursor: pointer;
+    z-index: 9998;
+    box-shadow: 0 4px 15px rgba(0, 255, 128, 0.3);
+    transition: transform 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  #chatbot-toggle:hover {
+    transform: scale(1.05);
+  }
+  .typing-indicator {
+    color: #888;
+    font-size: 0.8rem;
+    align-self: flex-start;
+    padding: 0 15px;
+    display: none;
+  }
+</style>
+
+<button id="chatbot-toggle">💬</button>
+
+<div id="chatbot-container">
+  <div id="chatbot-header">
+    <span>Vishnu AI Assistant</span>
+    <button id="chatbot-close">×</button>
+  </div>
+  <div id="chatbot-messages">
+    <!-- Messages appended here -->
+  </div>
+  <div id="chatbot-typing" class="typing-indicator">Typing...</div>
+  <div id="chatbot-input-area">
+    <input type="text" id="chatbot-input" placeholder="Ask about Vishnu..." autocomplete="off">
+    <button id="chatbot-send">Send</button>
+  </div>
+</div>
+
+<script>
+  const toggleBtn = document.getElementById('chatbot-toggle');
+  const chatContainer = document.getElementById('chatbot-container');
+  const closeBtn = document.getElementById('chatbot-close');
+  const messagesDiv = document.getElementById('chatbot-messages');
+  const inputField = document.getElementById('chatbot-input');
+  const sendBtn = document.getElementById('chatbot-send');
+  const typingIndicator = document.getElementById('chatbot-typing');
+  
+  let initialized = false;
+
+  const appendMessage = (text, sender) => {
+    const msgDiv = document.createElement('div');
+    msgDiv.classList.add('chat-msg', sender);
+    msgDiv.textContent = text;
+    messagesDiv.appendChild(msgDiv);
+    messagesDiv.scrollTop = messagesDiv.scrollHeight;
+  };
+
+  const handleOpen = () => {
+    chatContainer.style.display = 'flex';
+    toggleBtn.style.display = 'none';
+    if (!initialized) {
+      appendMessage("Hello. I'm Vishnu's AI assistant.", 'bot');
+      initialized = true;
+    }
+  };
+
+  const handleClose = () => {
+    chatContainer.style.display = 'none';
+    toggleBtn.style.display = 'flex';
+  };
+
+  const sendMessage = async () => {
+    const text = inputField.value.trim();
+    if (!text) return;
+    
+    appendMessage(text, 'user');
+    inputField.value = '';
+    
+    typingIndicator.style.display = 'block';
+    
+    try {
+      const response = await fetch('http://127.0.0.1:8000/api/v1/chatbot/', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ message: text })
+      });
+      
+      const data = await response.json();
+      typingIndicator.style.display = 'none';
+      
+      if (response.ok && data.answer) {
+        appendMessage(data.answer, 'bot');
+      } else {
+        appendMessage(data.error || "Sorry, I couldn't process that request.", 'bot');
+      }
+    } catch (err) {
+      typingIndicator.style.display = 'none';
+      appendMessage("Network error. Please try again later.", 'bot');
+    }
+  };
+
+  toggleBtn.addEventListener('click', handleOpen);
+  closeBtn.addEventListener('click', handleClose);
+  sendBtn.addEventListener('click', sendMessage);
+  inputField.addEventListener('keypress', (e) => {
+    if (e.key === 'Enter') sendMessage();
+  });
+</script>
+
 </body>
 </html>
+
