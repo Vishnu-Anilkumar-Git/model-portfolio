@@ -1,34 +1,57 @@
 import json
-from django.conf import settings
-from openai import OpenAI
+import logging
+from typing import Any
+
+import ollama
 
 from .prompts import SYSTEM_PROMPT
 
-def generate_response(message: str, context: dict) -> str:
-    # Use OpenAI provider
-    api_key = getattr(settings, 'OPENAI_API_KEY', None)
-    if not api_key:
-        return "I am currently undergoing maintenance. (OpenAI API key not configured)"
+logger = logging.getLogger(__name__)
 
-    client = OpenAI(api_key=api_key)
+OLLAMA_MODEL = "llama3.2:3b"
 
-    context_str = json.dumps(context, indent=2) if context else "No relevant context available."
-    
+
+def generate_response(message: str, context: dict[str, Any]) -> str:
+    """Generate a grounded response using the local Ollama model."""
+
+    context_str = (
+        json.dumps(context, indent=2, ensure_ascii=False)
+        if context
+        else "No relevant context available."
+    )
+
     messages = [
-        {"role": "system", "content": SYSTEM_PROMPT},
-        {"role": "system", "content": f"Verified Portfolio Context:\n{context_str}"},
-        {"role": "user", "content": message}
+        {
+            "role": "system",
+            "content": SYSTEM_PROMPT,
+        },
+        {
+            "role": "system",
+            "content": f"Verified Portfolio Context:\n{context_str}",
+        },
+        {
+            "role": "user",
+            "content": message,
+        },
     ]
 
     try:
-        response = client.chat.completions.create(
-            model="gpt-3.5-turbo",
+        chat_fn = getattr(ollama, "chat")
+        response = chat_fn(
+            model=OLLAMA_MODEL,
             messages=messages,
-            temperature=0.0,
-            max_tokens=256,
-            timeout=10.0
+            options={
+                "temperature": 0,
+            },
         )
-        return response.choices[0].message.content.strip()
-    except Exception as e:
-        # Do not expose full stack traces
+
+        answer = response["message"]["content"]
+
+        if not answer:
+            return "I couldn't generate a response right now."
+
+        return answer.strip()
+
+    except Exception as exc:
+        logger.exception("Ollama request failed: %s", exc)
         return "I encountered an error while processing your request."
