@@ -3,13 +3,79 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdnjs.cloudflare.com https://fonts.googleapis.com https://fonts.gstatic.com data:; img-src 'self' data:;">
+<!-- CSP: unsafe-eval is retained for the Three.js r128 hero animation. Do not remove
+     without live-testing the site with it dropped first — see SEO changelog. -->
+<meta http-equiv="Content-Security-Policy" content="default-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdnjs.cloudflare.com https://fonts.googleapis.com https://fonts.gstatic.com data:; img-src 'self' data:; object-src 'none'; base-uri 'self'; frame-ancestors 'none';">
 <meta name="referrer" content="no-referrer">
-<title>Vishnu Anilkumar — Cybersecurity Student</title>
-<meta name="description" content="Vishnu Anilkumar — Cybersecurity Student, Aspiring SOC Analyst. Portfolio of security, AI, and full-stack projects.">
+<meta name="robots" content="index, follow">
+<meta name="author" content="Vishnu Anilkumar">
+<meta name="theme-color" content="#0B0E11">
+<title>Vishnu Anilkumar | Cybersecurity Student & Aspiring SOC Analyst</title>
+<meta name="description" content="Vishnu Anilkumar is a BCA graduate and cybersecurity student from Kerala aspiring to become a SOC Analyst, with interests in ethical hacking, threat intelligence, security operations, AI security, and software development.">
+<link rel="canonical" href="https://vishnuanilkumar.in/">
+<link rel="manifest" href="/site.webmanifest">
+
+<!-- Open Graph -->
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://vishnuanilkumar.in/">
+<meta property="og:title" content="Vishnu Anilkumar | Cybersecurity Student & Aspiring SOC Analyst">
+<meta property="og:description" content="BCA graduate and cybersecurity student aspiring to become a SOC Analyst — ethical hacking, threat intelligence, security operations, and AI security projects.">
+<meta property="og:site_name" content="Vishnu Anilkumar">
+<meta property="og:image" content="https://vishnuanilkumar.in/assets/images/og-cover.jpg">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Vishnu Anilkumar — Cybersecurity Student, Aspiring SOC Analyst">
+
+<!-- Twitter Card -->
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Vishnu Anilkumar | Cybersecurity Student & Aspiring SOC Analyst">
+<meta name="twitter:description" content="BCA graduate and cybersecurity student aspiring to become a SOC Analyst — ethical hacking, threat intelligence, security operations, and AI security projects.">
+<meta name="twitter:image" content="https://vishnuanilkumar.in/assets/images/og-cover.jpg">
+
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+<link rel="icon" href="/assets/favicon/favicon.ico" sizes="any">
+<link rel="icon" type="image/png" sizes="16x16" href="/assets/favicon/favicon-16x16.png">
+<link rel="icon" type="image/png" sizes="32x32" href="/assets/favicon/favicon-32x32.png">
+<link rel="apple-touch-icon" href="/assets/favicon/apple-touch-icon.png">
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "Person",
+  "name": "Vishnu Anilkumar",
+  "url": "https://vishnuanilkumar.in/",
+  "jobTitle": "Cybersecurity Student",
+  "description": "BCA graduate and cybersecurity student aspiring to become a SOC Analyst, with interests in ethical hacking, threat intelligence, security operations, and AI-assisted security systems.",
+  "email": "mailto:vishnuanil2k05@gmail.com",
+  "sameAs": [
+    "https://github.com/Vishnu-Anilkumar-Git",
+    "https://www.linkedin.com/in/vishnu-anilkumar-1083b038b"
+  ],
+  "knowsAbout": [
+    "Cybersecurity",
+    "Ethical Hacking",
+    "Threat Intelligence",
+    "Security Operations",
+    "Network Security",
+    "Penetration Testing",
+    "Linux",
+    "Python",
+    "Django",
+    "AI-Assisted Security Systems"
+  ]
+}
+</script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "WebSite",
+  "name": "Vishnu Anilkumar | Cybersecurity Portfolio",
+  "url": "https://vishnuanilkumar.in/"
+}
+</script>
 <style>
   :root{
     --bg: #0B0E11;
@@ -30,6 +96,17 @@
 
   *{ margin:0; padding:0; box-sizing:border-box; }
   html{ scroll-behavior:smooth; }
+
+  .skip-link{
+    position:absolute; left:12px; top:-60px; z-index:1000;
+    background:var(--accent); color:var(--bg); font-family:var(--mono); font-size:13px;
+    padding:10px 18px; transition:top 0.2s;
+  }
+  .skip-link:focus{ top:12px; }
+
+  a:focus-visible, button:focus-visible, .tab-btn:focus-visible{
+    outline:2px solid var(--accent); outline-offset:3px;
+  }
   body{
     background:var(--bg);
     color:var(--text);
@@ -177,6 +254,12 @@
   }
   .cert-chip:hover{ border-color:var(--accent); color:var(--text); }
   .cert-chip .tick{ color:var(--accent-2); font-size:11px; }
+  .cert-chip em{ font-style:normal; color:var(--text-faint); font-size:11px; margin-left:4px; }
+
+  .faq-list{ display:flex; flex-direction:column; gap:0; border-top:1px solid var(--line); max-width:760px; }
+  .faq-item{ padding:26px 0; border-bottom:1px solid var(--line); }
+  .faq-item h3{ font-family:var(--mono); font-size:15px; font-weight:600; margin-bottom:10px; }
+  .faq-item p{ color:var(--text-dim); font-size:14px; }
 
   /* CONTACT */
   .contact-panel{
@@ -210,25 +293,32 @@
 </head>
 <body>
 
-<nav>
+<a href="#main-content" class="skip-link">Skip to main content</a>
+
+<header>
+<nav aria-label="Primary">
   <div class="nav-inner">
-    <div class="brand"><span class="dot"></span>VISHNU.SEC</div>
+    <a href="#" class="brand"><span class="dot" aria-hidden="true"></span>VISHNU.SEC</a>
     <div class="nav-links">
       <a href="#about">About</a>
       <a href="#skills">Skills</a>
       <a href="#projects">Projects</a>
       <a href="#certs">Certs</a>
+      <a href="#faq">FAQ</a>
     </div>
     <a href="#contact" class="nav-cta">Contact</a>
   </div>
 </nav>
+</header>
+
+<main id="main-content">
 
 <section class="hero">
-  <canvas id="hero-canvas"></canvas>
-  <div class="hero-scanline"></div>
+  <canvas id="hero-canvas" aria-hidden="true"></canvas>
+  <div class="hero-scanline" aria-hidden="true"></div>
   <div class="wrap hero-inner">
     <div class="hero-eyebrow">root@portfolio:~$ whoami<span class="caret">_</span></div>
-    <h1>Vishnu<br>Anil<span>kumar</span></h1>
+    <h1 aria-label="Vishnu Anilkumar">Vishnu<br>Anil<span>kumar</span></h1>
     <p class="hero-tagline">Cybersecurity Student · Aspiring SOC Analyst · Ethical Hacking &amp; Security Enthusiast</p>
     <div class="hero-cta">
       <a href="#projects" class="btn">View Projects →</a>
@@ -246,8 +336,8 @@
     </div>
     <div class="about-grid">
       <div class="about-bio reveal">
-        <p>I'm a <strong>BCA graduate</strong> with a strong interest in cybersecurity, ethical hacking, threat intelligence, and security operations. My background in software development helps me understand both how applications are built — and how they can be attacked and secured.</p>
-        <p>I'm currently developing my skills across <strong>networking, Linux, penetration testing, threat intelligence, security monitoring, and AI-assisted security systems.</strong> I enjoy building practical projects rather than limiting myself to theory, with a long-term goal of working as a cybersecurity analyst and progressing into advanced security engineering.</p>
+        <p>I'm a <strong>BCA graduate</strong> based in Kerala, India, with a strong interest in cybersecurity, ethical hacking, threat intelligence, and security operations. My background in software development helps me understand both how applications are built — and how they can be attacked and secured.</p>
+        <p>I completed my Bachelor of Computer Applications at <strong>BVM Holy Cross College, Cherpunkal</strong>, affiliated with <strong>Mahatma Gandhi University</strong>. I'm currently developing my skills across <strong>networking, Linux, penetration testing, threat intelligence, security monitoring, and AI-assisted security systems.</strong> I enjoy building practical projects rather than limiting myself to theory, with a long-term goal of working as a cybersecurity analyst and progressing into advanced security engineering.</p>
       </div>
       <div class="stat-grid reveal">
         <div class="stat"><div class="num">3</div><div class="label">Projects Shipped</div></div>
@@ -316,13 +406,13 @@
       <h2>Completed, ongoing, and what's next.</h2>
     </div>
 
-    <div class="tabs reveal">
-      <button class="tab-btn active" data-status="completed"><span class="dot"></span>Completed (3)</button>
-      <button class="tab-btn" data-status="ongoing"><span class="dot"></span>Ongoing (5)</button>
-      <button class="tab-btn" data-status="upcoming"><span class="dot"></span>Upcoming (5)</button>
+    <div class="tabs reveal" role="tablist" aria-label="Filter projects by status">
+      <button class="tab-btn active" role="tab" aria-selected="true" aria-controls="project-grid" id="tab-completed" data-status="completed"><span class="dot" aria-hidden="true"></span>Completed (3)</button>
+      <button class="tab-btn" role="tab" aria-selected="false" tabindex="-1" aria-controls="project-grid" id="tab-ongoing" data-status="ongoing"><span class="dot" aria-hidden="true"></span>Ongoing (5)</button>
+      <button class="tab-btn" role="tab" aria-selected="false" tabindex="-1" aria-controls="project-grid" id="tab-upcoming" data-status="upcoming"><span class="dot" aria-hidden="true"></span>Upcoming (5)</button>
     </div>
 
-    <div class="project-grid reveal" id="project-grid">
+    <div class="project-grid reveal" id="project-grid" role="tabpanel" aria-labelledby="tab-completed">
 
       <!-- COMPLETED -->
       <div class="card show" data-status="completed">
@@ -401,18 +491,54 @@
     <div class="section-head reveal">
       <div class="eyebrow">04 / Certifications &amp; Training</div>
       <h2>Currently building credentials</h2>
+      <p>All items below are training in progress — none are being presented as completed or officially awarded certifications.</p>
     </div>
     <div class="cert-list reveal">
-      <span class="cert-chip"><span class="tick">●</span>Professional Diploma in Cyber Security</span>
-      <span class="cert-chip"><span class="tick">●</span>CompTIA A+</span>
-      <span class="cert-chip"><span class="tick">●</span>CompTIA Network+</span>
-      <span class="cert-chip"><span class="tick">●</span>CompTIA CySA+</span>
-      <span class="cert-chip"><span class="tick">●</span>CCNA</span>
-      <span class="cert-chip"><span class="tick">●</span>CCNP</span>
-      <span class="cert-chip"><span class="tick">●</span>AZ-800</span>
-      <span class="cert-chip"><span class="tick">●</span>AZ-801</span>
-      <span class="cert-chip"><span class="tick">●</span>RHCE</span>
-      <span class="cert-chip"><span class="tick">●</span>Ethical Hacking &amp; Cybersecurity — SMEClabs</span>
+      <span class="cert-chip"><span class="tick">●</span>Professional Diploma in Cyber Security <em>(in progress)</em></span>
+      <span class="cert-chip"><span class="tick">●</span>CompTIA A+ <em>(in progress)</em></span>
+      <span class="cert-chip"><span class="tick">●</span>CompTIA Network+ <em>(in progress)</em></span>
+      <span class="cert-chip"><span class="tick">●</span>CompTIA CySA+ <em>(in progress)</em></span>
+      <span class="cert-chip"><span class="tick">●</span>CCNA <em>(in progress)</em></span>
+      <span class="cert-chip"><span class="tick">●</span>CCNP <em>(in progress)</em></span>
+      <span class="cert-chip"><span class="tick">●</span>AZ-800 <em>(in progress)</em></span>
+      <span class="cert-chip"><span class="tick">●</span>AZ-801 <em>(in progress)</em></span>
+      <span class="cert-chip"><span class="tick">●</span>RHCE <em>(in progress)</em></span>
+      <span class="cert-chip"><span class="tick">●</span>Ethical Hacking &amp; Cybersecurity — SMEClabs <em>(in progress)</em></span>
+    </div>
+  </div>
+</section>
+
+<section id="faq">
+  <div class="wrap">
+    <div class="section-head reveal">
+      <div class="eyebrow">06 / FAQ</div>
+      <h2>Frequently Asked Questions</h2>
+    </div>
+    <div class="faq-list reveal">
+      <div class="faq-item">
+        <h3>Who is Vishnu Anilkumar?</h3>
+        <p>Vishnu Anilkumar is a BCA graduate and cybersecurity student with a background in software development, now focused on ethical hacking, threat intelligence, and security operations.</p>
+      </div>
+      <div class="faq-item">
+        <h3>What does Vishnu Anilkumar specialize in?</h3>
+        <p>His current focus areas are networking, Linux, penetration testing, threat intelligence, security monitoring, and AI-assisted security systems, with the long-term goal of working as a cybersecurity analyst (SOC Analyst).</p>
+      </div>
+      <div class="faq-item">
+        <h3>What cybersecurity projects has Vishnu Anilkumar built?</h3>
+        <p>Ongoing security-focused projects include a Threat Intelligence Dashboard, an AI security platform (ASI) combining cameras, sensors, and AI analysis, and an AI-based property security and sensor fusion project. See the Projects section above for full details.</p>
+      </div>
+      <div class="faq-item">
+        <h3>What technologies does Vishnu Anilkumar use?</h3>
+        <p>Python, Django, Flask, and JavaScript for development; Nmap, Wireshark, Burp Suite, Metasploit, and Kali Linux for security work; and Python-based AI/ML tools including scikit-learn, OpenAI APIs, and Whisper.</p>
+      </div>
+      <div class="faq-item">
+        <h3>What is Vishnu Anilkumar currently learning?</h3>
+        <p>He's currently working through training in a Professional Diploma in Cyber Security, CompTIA Network+ and CySA+, CCNA, and RHCE, alongside hands-on practice in penetration testing and AI-assisted security systems. These are training in progress, not completed certifications.</p>
+      </div>
+      <div class="faq-item">
+        <h3>How can Vishnu Anilkumar be contacted?</h3>
+        <p>By email at vishnuanil2k05@gmail.com, or via GitHub and LinkedIn — links are in the Contact section below.</p>
+      </div>
     </div>
   </div>
 </section>
@@ -426,14 +552,16 @@
         <p>Open to SOC analyst, security intern, and entry-level cybersecurity roles. Reach out — I reply fast.</p>
       </div>
       <div class="contact-links">
-        <a class="contact-link" href="mailto:vishnuanil2k05@gmail.com">Email <span class="arrow">↗</span></a>
-        <a class="contact-link" href="https://github.com/Vishnu-Anilkumar-Git" target="_blank" rel="noopener noreferrer">GitHub <span class="arrow">↗</span></a>
-        <a class="contact-link" href="https://www.linkedin.com/in/vishnu-anilkumar-1083b038b" target="_blank" rel="noopener noreferrer">LinkedIn <span class="arrow">↗</span></a>
-        <a class="contact-link" href="https://vishnuanilkumar.in" target="_blank" rel="noopener noreferrer">vishnuanilkumar.in <span class="arrow">↗</span></a>
+        <a class="contact-link" href="mailto:vishnuanil2k05@gmail.com" aria-label="Email Vishnu Anilkumar">Email <span class="arrow" aria-hidden="true">↗</span></a>
+        <a class="contact-link" href="https://github.com/Vishnu-Anilkumar-Git" target="_blank" rel="noopener noreferrer" aria-label="Vishnu Anilkumar on GitHub (opens in new tab)">GitHub <span class="arrow" aria-hidden="true">↗</span></a>
+        <a class="contact-link" href="https://www.linkedin.com/in/vishnu-anilkumar-1083b038b" target="_blank" rel="noopener noreferrer" aria-label="Vishnu Anilkumar on LinkedIn (opens in new tab)">LinkedIn <span class="arrow" aria-hidden="true">↗</span></a>
+        <a class="contact-link" href="https://vishnuanilkumar.in" target="_blank" rel="noopener noreferrer" aria-label="vishnuanilkumar.in (opens in new tab)">vishnuanilkumar.in <span class="arrow" aria-hidden="true">↗</span></a>
       </div>
     </div>
   </div>
 </section>
+
+</main>
 
 <footer>
   <div class="wrap footer-inner">
@@ -455,15 +583,32 @@
   }, { threshold: 0.15 });
   revealEls.forEach(el => io.observe(el));
 
-  // ---- Project tabs ----
-  const tabBtns = document.querySelectorAll('.tab-btn');
+  // ---- Project tabs (with ARIA tablist keyboard support) ----
+  const tabBtns = Array.from(document.querySelectorAll('.tab-btn'));
   const cards = document.querySelectorAll('.card');
-  tabBtns.forEach(btn => {
-    btn.addEventListener('click', () => {
-      tabBtns.forEach(b => b.classList.remove('active'));
-      btn.classList.add('active');
-      const status = btn.dataset.status;
-      cards.forEach(c => c.classList.toggle('show', c.dataset.status === status));
+  const projectGrid = document.getElementById('project-grid');
+
+  function activateTab(btn) {
+    tabBtns.forEach(b => {
+      const isActive = b === btn;
+      b.classList.toggle('active', isActive);
+      b.setAttribute('aria-selected', isActive ? 'true' : 'false');
+      b.tabIndex = isActive ? 0 : -1;
+    });
+    const status = btn.dataset.status;
+    cards.forEach(c => c.classList.toggle('show', c.dataset.status === status));
+    projectGrid.setAttribute('aria-labelledby', btn.id);
+  }
+
+  tabBtns.forEach((btn, i) => {
+    btn.addEventListener('click', () => activateTab(btn));
+    btn.addEventListener('keydown', (e) => {
+      let next = null;
+      if (e.key === 'ArrowRight') next = tabBtns[(i + 1) % tabBtns.length];
+      if (e.key === 'ArrowLeft') next = tabBtns[(i - 1 + tabBtns.length) % tabBtns.length];
+      if (e.key === 'Home') next = tabBtns[0];
+      if (e.key === 'End') next = tabBtns[tabBtns.length - 1];
+      if (next) { e.preventDefault(); next.focus(); activateTab(next); }
     });
   });
 
