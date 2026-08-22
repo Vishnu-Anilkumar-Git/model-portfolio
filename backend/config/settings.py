@@ -10,8 +10,21 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/6.1/ref/settings/
 """
 
+import os
 from pathlib import Path
-from decouple import config, Csv
+from typing import Any, cast
+
+# pyright: reportMissingTypeStubs=false
+from decouple import config as _config, Csv
+
+
+def get_bool(name: str, default: bool = False) -> bool:
+    return cast(bool, _config(name, default=default, cast=bool))
+
+
+def get_list(name: str, default: str) -> list[str]:
+    return cast(list[str], _config(name, default=default, cast=Csv()))
+
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -24,9 +37,9 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = 'django-insecure-m)!6hyj=7$2xrtuw%=n6h#6((vu*&mqnhupglcu^#2s(ywwt@_'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = config('DEBUG', default=False, cast=bool)
+DEBUG: bool = get_bool('DEBUG', default=False)
 
-ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='127.0.0.1,localhost', cast=Csv())
+ALLOWED_HOSTS: list[str] = get_list('ALLOWED_HOSTS', default='127.0.0.1,localhost')
 
 
 # Application definition
@@ -56,7 +69,7 @@ MIDDLEWARE = [
 
 ROOT_URLCONF = 'config.urls'
 
-TEMPLATES = [
+TEMPLATES: list[dict[str, Any]] = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
         'DIRS': [],
@@ -77,7 +90,7 @@ WSGI_APPLICATION = 'config.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/6.1/ref/settings/#databases
 
-DATABASES = {
+DATABASES: dict[str, dict[str, str | Path]] = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
         'NAME': BASE_DIR / 'db.sqlite3',
@@ -133,11 +146,9 @@ MAILERS = {
 
 
 # Custom App Settings
-OPENAI_API_KEY = config('OPENAI_API_KEY', default='')
+OPENAI_API_KEY: str = os.getenv('OPENAI_API_KEY', '')
 
-
-
-REST_FRAMEWORK = {
+REST_FRAMEWORK: dict[str, Any] = {
     'DEFAULT_PERMISSION_CLASSES': [
         'rest_framework.permissions.AllowAny',
     ],
@@ -149,8 +160,9 @@ REST_FRAMEWORK = {
     }
 }
 
-CORS_ALLOWED_ORIGINS = config(
-    'CORS_ALLOWED_ORIGINS',
-    default='http://localhost:5173,http://127.0.0.1:5173',
-    cast=Csv()
-)
+CORS_ALLOWED_ORIGINS: list[str] = [
+    'http://127.0.0.1:5500',
+    'http://localhost:5500',
+    'https://vishnuanilkumar.in',
+]
+

@@ -15,7 +15,11 @@ def generate_response(message: str, context: dict[str, Any]) -> str:
     """Generate a grounded response using the local Ollama model."""
 
     context_str = (
-        json.dumps(context, indent=2, ensure_ascii=False)
+        json.dumps(
+            context,
+            indent=2,
+            ensure_ascii=False,
+        )
         if context
         else "No relevant context available."
     )
@@ -27,7 +31,12 @@ def generate_response(message: str, context: dict[str, Any]) -> str:
         },
         {
             "role": "system",
-            "content": f"Verified Portfolio Context:\n{context_str}",
+            "content": (
+                "VERIFIED PORTFOLIO CONTEXT:\n"
+                f"{context_str}\n\n"
+                "IMPORTANT: Treat the above data as the only authoritative "
+                "source for claims about Vishnu."
+            ),
         },
         {
             "role": "user",
@@ -36,13 +45,14 @@ def generate_response(message: str, context: dict[str, Any]) -> str:
     ]
 
     try:
-        chat_fn = getattr(ollama, "chat")
-        response = chat_fn(
+        response = ollama.chat(
             model=OLLAMA_MODEL,
             messages=messages,
             options={
                 "temperature": 0,
+                "num_predict": 350,
             },
+            keep_alive="10m",
         )
 
         answer = response["message"]["content"]
