@@ -1,0 +1,61 @@
+# Vishnu Anilkumar
+
+> Cybersecurity Student · Aspiring SOC Analyst · Ethical Hacking & Security Enthusiast
+
+Canonical: https://vishnuanilkumar.in
+Location: Kerala, India
+Target role: SOC Analyst
+Contact: vishnuanil2k05@gmail.com
+
+## About
+
+I'm a BCA graduate based in Kerala, India, with a strong interest in cybersecurity, ethical hacking, threat intelligence, and security operations. My background in software development helps me understand both how applications are built — and how they can be attacked and secured.
+
+I completed my Bachelor of Computer Applications at BVM Holy Cross College, Cherpunkal, affiliated with Mahatma Gandhi University. I'm currently developing my skills across networking, Linux, penetration testing, threat intelligence, security monitoring, and AI-assisted security systems. I enjoy building practical projects rather than limiting myself to theory, with a long-term goal of working as a cybersecurity analyst and progressing into advanced security engineering.
+
+## Projects
+
+- [CarePlus — Hospital Appointment Booking System](https://vishnuanilkumar.in/projects/careplus-hospital-appointment-booking-system) — Completed. A full-stack hospital appointment management platform to manage patients, doctors, appointments, and administrative workflows.
+- [Kerala Tourism Website](https://vishnuanilkumar.in/projects/kerala-tourism-website) — Completed. A tourism platform showcasing Kerala's destinations, attractions, and travel information with a dynamic backend.
+- [Precision Builders — Intelligent Construction Platform](https://vishnuanilkumar.in/projects/precision-builders-intelligent-construction-platform) — Completed. A construction collaboration platform combining project management with ML-based cost and time prediction to assist planning.
+- [OffGrid — E-Commerce Clothing Store](https://vishnuanilkumar.in/projects/offgrid-e-commerce-clothing-store) — Ongoing. A full-featured Django clothing store: product management, filtering, sorting, stock indicators, reviews, ratings, coupons, delivery estimates, and Razorpay payments.
+- [ASI — AI Security Platform](https://vishnuanilkumar.in/projects/asi-ai-security-platform) — Ongoing. An intelligent physical-security platform combining cameras, sensors, and network monitoring to detect suspicious activity and generate alerts.
+- [Threat Intelligence Dashboard](https://vishnuanilkumar.in/projects/threat-intelligence-dashboard) — Ongoing. A security dashboard for collecting, processing, and visualizing threat intel — helping analysts monitor IOCs, suspicious infrastructure, and emerging threats.
+- [JARVIS — Personal AI Assistant](https://vishnuanilkumar.in/projects/jarvis-personal-ai-assistant) — Ongoing. A local personal AI assistant focused on natural voice interaction, speech recognition, and future integration with security workflows.
+- [AI-Based Property Security & Sensor Fusion](https://vishnuanilkumar.in/projects/ai-based-property-security-sensor-fusion) — Ongoing. Research combining cameras, mmWave radar, and sensors with AI to identify meaningful human movement vs. normal environmental activity.
+- [CTI Platform](https://vishnuanilkumar.in/projects/cti-platform) — Upcoming. A complete cyber threat intelligence platform for collecting, correlating, analyzing, and visualizing threats with automated IOC enrichment.
+- [AI SOC Analyst](https://vishnuanilkumar.in/projects/ai-soc-analyst) — Upcoming. An AI-assisted SOC platform to analyze security events, prioritize alerts, correlate indicators, and assist analysts with investigation.
+- [Advanced Network Security Monitoring System](https://vishnuanilkumar.in/projects/advanced-network-security-monitoring-system) — Upcoming. Real-time network monitoring and threat detection capable of identifying suspicious traffic and anomalous behavior.
+- [Automated Vulnerability Assessment Platform](https://vishnuanilkumar.in/projects/automated-vulnerability-assessment-platform) — Upcoming. A platform to automate reconnaissance, vulnerability discovery, service enumeration, and reporting across authorized systems.
+- [AI-Powered Digital Security Lab](https://vishnuanilkumar.in/projects/ai-powered-digital-security-lab) — Upcoming. A personal cybersecurity lab: virtualized environments, Kali Linux, vulnerable machines, network monitoring, and AI-assisted experimentation.
+
+## Skills
+
+- Programming & Development: Python, JavaScript, Java, C / C++, PHP, HTML / CSS, Django, Flask, React, Tailwind CSS, Bootstrap
+- Cybersecurity: Ethical Hacking, Network Security, Vulnerability Assessment, Threat Intelligence, SOC / Security Operations, Linux & Kali Linux, Network Scanning, Web App Security, Mobile App Security, OSINT, Incident Detection & Analysis
+- Tools & Technologies: Nmap, Wireshark, Burp Suite, Metasploit, MobSF, Termux, Git / GitHub, Docker, XAMPP, MySQL / MariaDB, PostgreSQL, VS Code
+- AI, Data & Security Projects: Python AI/ML, Scikit-learn, Pandas, OpenAI APIs, Whisper / Faster-Whisper, Ollama, Computer Vision, AI-Assisted Threat Detection
+
+## Certifications and training
+
+- Professional Diploma in Cyber Security —  (In progress)
+- CompTIA A+ — CompTIA (In progress)
+- CompTIA Network+ — CompTIA (In progress)
+- CompTIA CySA+ — CompTIA (In progress)
+- CCNA — Cisco (In progress)
+- CCNP — Cisco (In progress)
+- AZ-800 — Microsoft (In progress)
+- AZ-801 — Microsoft (In progress)
+- RHCE — Red Hat (In progress)
+- Ethical Hacking & Cybersecurity — SMEClabs (In progress)
+
+## Contact
+
+- Email: vishnuanil2k05@gmail.com
+- GitHub: https://github.com/Vishnu-Anilkumar-Git
+- LinkedIn: https://www.linkedin.com/in/vishnu-anilkumar-1083b038b
+
+## Full content
+
+- [llms-full.txt](https://vishnuanilkumar.in/llms-full.txt): complete project case studies, education, experience and FAQs.
+

@@ -1,1081 +1,519 @@
-import json
+"""Retrieval over the portfolio database.
+
+The old implementation loaded six JSON files and fuzzy-matched keys. This one
+builds documents from the same rows the site renders, scores them with IDF-
+weighted token overlap plus phrase and kind boosts, and returns structured
+sources for the chat UI.
+"""
+
+from __future__ import annotations
+
+import math
 import re
+from collections import Counter
+from dataclasses import dataclass
 from difflib import SequenceMatcher
-from pathlib import Path
-from typing import Any, cast
+from typing import Iterable
+
+from django.conf import settings
+
+from content.models import (
+    Achievement,
+    Certification,
+    Education,
+    Experience,
+    FAQ,
+    Profile,
+    Project,
+    SkillCategory,
+)
 
 
-KNOWLEDGE_DIR = Path(__file__).resolve().parent.parent / "knowledge"
+@dataclass(frozen=True)
+class Document:
+    key: str
+    label: str
+    url: str
+    kind: str
+    text: str
+    answer: str | None = None
 
 
-# ============================================================
-# JSON LOADING
-# ============================================================
+@dataclass
+class RetrievalResult:
+    documents: list[Document]
+    sources: list[dict[str, str]]
 
-def load_json(filename: str) -> dict[str, Any]:
-    """
-    Safely load a JSON knowledge file.
-
-    Missing or invalid files return an empty dictionary instead
-    of crashing the chatbot.
-    """
-    path = KNOWLEDGE_DIR / filename
-
-    if not path.exists():
-        return {}
-
-    try:
-        with open(path, "r", encoding="utf-8") as file:
-            data = json.load(file)
-
-        if isinstance(data, dict):
-            return cast(dict[str, Any], data)
-
-    except (json.JSONDecodeError, OSError):
-        pass
-
-    return {}
+    @property
+    def has_match(self) -> bool:
+        return bool(self.documents)
 
 
-# ============================================================
-# TEXT NORMALIZATION
-# ============================================================
+TOKEN_RE = re.compile(r"[a-z0-9][a-z0-9+#.]*")
 
-def normalize_text(text: str) -> str:
-    """
-    Normalize user input for reliable matching.
-    """
-    text = text.lower().strip()
+STOPWORDS = {
+    "a", "an", "the", "is", "are", "was", "were", "be", "been", "being",
+    "of", "to", "in", "on", "at", "for", "with", "by", "from", "about",
+    "and", "or", "but", "if", "then", "than", "so", "as", "into", "over",
+    "i", "me", "my", "we", "our", "you", "your", "he", "him", "his",
+    "she", "her", "it", "its", "they", "them", "their", "this", "that",
+    "these", "those", "do", "does", "did", "have", "has", "had", "can",
+    "could", "would", "should", "will", "shall", "may", "might", "must",
+    "what", "which", "who", "whom", "whose", "when", "where", "why", "how",
+    "tell", "give", "show", "please", "any", "some", "there", "here",
+    "am", "just", "also", "very", "much", "more", "most", "currently",
+}
 
-    # Remove punctuation while preserving spaces.
-    text = re.sub(r"[^a-z0-9+#@.\s]", " ", text)
-
-    # Collapse repeated whitespace.
-    text = re.sub(r"\s+", " ", text)
-
-    return text
-
-
-def tokenize(text: str) -> set[str]:
-    """
-    Convert text into meaningful tokens.
-    """
-    return {
-        token
-        for token in normalize_text(text).split()
-        if len(token) >= 2
-    }
-
-
-def contains_any(text: str, keywords: list[str]) -> bool:
-    """
-    Check whether any keyword/phrase appears in normalized text.
-    """
-    normalized = normalize_text(text)
-
-    return any(
-        keyword.lower() in normalized
-        for keyword in keywords
-    )
-
-
-# ============================================================
-# FUZZY MATCHING
-# ============================================================
-
-def fuzzy_match(query: str, target: str, threshold: float = 0.78) -> bool:
-    """
-    Detect small spelling mistakes.
-
-    Example:
-        "cybersecuirty" -> "cybersecurity"
-        "carepluss" -> "careplus"
-    """
-    query_normalized = normalize_text(query)
-    target_normalized = normalize_text(target)
-
-    if not query_normalized or not target_normalized:
-        return False
-
-    if query_normalized in target_normalized:
-        return True
-
-    ratio = SequenceMatcher(
-        None,
-        query_normalized,
-        target_normalized,
-    ).ratio()
-
-    return ratio >= threshold
-
-
-# ============================================================
-# SOURCE LOADING
-# ============================================================
-
-def load_source(filename: str) -> dict[str, Any]:
-    """
-    Wrapper around load_json for cleaner retrieval code.
-    """
-    return load_json(filename)
-
-
-# ============================================================
-# INTENT KEYWORDS
-# ============================================================
-
-INTENT_KEYWORDS: dict[str, list[str]] = {
-
-    # --------------------------------------------------------
-    # Identity / Profile
-    # --------------------------------------------------------
-
-    "identity": [
-        "who is vishnu",
-        "who's vishnu",
-        "tell me about vishnu",
-        "about vishnu",
-        "introduce vishnu",
-        "introduction",
-        "background",
-        "profile",
-        "bio",
-        "biography",
-        "vishnu anilkumar",
-    ],
-
-    "profile": [
-        "who is he",
-        "tell me about him",
-        "his background",
-        "his profile",
-        "professional background",
-        "professional profile",
-        "what does vishnu do",
-        "what does he do",
-        "what is vishnu doing",
-    ],
-
-    # --------------------------------------------------------
-    # Location
-    # --------------------------------------------------------
-
-    "location": [
-        "where is vishnu from",
-        "where does vishnu live",
-        "where is he from",
-        "location",
-        "based in",
-        "from kerala",
-        "from india",
-        "which place",
-        "which city",
-        "hometown",
-    ],
-
-    # --------------------------------------------------------
-    # Education
-    # --------------------------------------------------------
-
-    "education": [
-        "education",
-        "educated",
-        "study",
-        "studied",
-        "studying",
-        "college",
-        "university",
-        "degree",
-        "bca",
-        "academic",
-        "academics",
-        "graduated",
-        "graduate",
-        "qualification",
-        "qualifications",
-        "where did vishnu study",
-        "where did he study",
-        "what did vishnu study",
-        "what did he study",
-    ],
-
-    # --------------------------------------------------------
-    # Skills
-    # --------------------------------------------------------
-
-    "skills": [
-        "skill",
-        "skills",
-        "technical skills",
-        "programming",
-        "programming languages",
-        "languages",
-        "framework",
-        "frameworks",
-        "technology",
-        "technologies",
-        "tech stack",
-        "tools",
-        "software",
-        "what can vishnu do",
-        "what does vishnu know",
-        "what technologies does he know",
-    ],
-
-    # --------------------------------------------------------
-    # Cybersecurity
-    # --------------------------------------------------------
-
-    "cybersecurity": [
-        "cybersecurity",
-        "cyber security",
-        "cyber security background",
-        "ethical hacking",
-        "ethical hacker",
-        "hacking",
-        "penetration testing",
-        "pentesting",
-        "soc",
-        "soc analyst",
-        "security analyst",
-        "information security",
-        "network security",
-        "application security",
-        "security operations",
-        "cyber",
-        "cybersecurity career",
-        "security career",
-        "cybersecurity interest",
-        "cybersecurity interests",
-    ],
-
-    # --------------------------------------------------------
-    # Training / Certifications
-    # --------------------------------------------------------
-
-    "training": [
-        "training",
-        "trainings",
-        "course",
-        "courses",
-        "learning",
-        "learn",
-        "currently learning",
-        "currently studying",
-        "certification",
-        "certifications",
-        "certificate",
-        "certified",
-        "professional diploma",
-        "ceh",
-        "security+",
-        "cysa",
-        "ccna",
-        "ccnp",
-        "rhce",
-        "rhsca",
-        "az-800",
-        "az-801",
-        "comptia",
-    ],
-
-    # --------------------------------------------------------
-    # Experience
-    # --------------------------------------------------------
-
-    "experience": [
-        "experience",
-        "work experience",
-        "professional experience",
-        "employment",
-        "worked",
-        "work history",
-        "job",
-        "jobs",
-        "career experience",
-        "previous work",
-    ],
-
-    # --------------------------------------------------------
-    # Career
-    # --------------------------------------------------------
-
-    "career": [
-        "career",
-        "career goal",
-        "career goals",
-        "career plan",
-        "future career",
-        "aspiration",
-        "aspirations",
-        "goal",
-        "goals",
-        "looking for",
-        "career path",
-        "professional goal",
-    ],
-
-    # --------------------------------------------------------
-    # Interests / Hobbies
-    # --------------------------------------------------------
-
-    "interests": [
-        "hobby",
-        "hobbies",
-        "interest",
-        "interests",
-        "passion",
-        "passions",
-        "free time",
-        "outside work",
-        "outside coding",
-        "what does vishnu like",
-        "what does he like",
-        "what does vishnu enjoy",
-        "what does he enjoy",
-    ],
-
-    # --------------------------------------------------------
-    # Contact
-    # --------------------------------------------------------
-
-    "contact": [
-        "contact",
-        "contact vishnu",
-        "reach vishnu",
-        "reach him",
-        "email",
-        "email address",
-        "phone",
-        "github",
-        "linkedin",
-        "social media",
-        "socials",
-        "portfolio link",
-        "profile link",
-    ],
-
-    # --------------------------------------------------------
-    # FAQ
-    # --------------------------------------------------------
-
-    "faq": [
-        "faq",
-        "frequently asked",
-        "frequently asked questions",
-        "common questions",
-    ],
+SYNONYMS: dict[str, set[str]] = {
+    "project": {"projects", "built", "build", "building", "portfolio", "work"},
+    "projects": {"project", "built", "build", "portfolio", "work"},
+    "built": {"project", "projects", "build"},
+    "skill": {"skills", "technology", "technologies", "tools", "stack", "know"},
+    "skills": {"skill", "technology", "technologies", "tools", "stack"},
+    "tech": {"technology", "technologies", "tools", "stack", "skills"},
+    "tools": {"tool", "technology", "technologies", "skills"},
+    "tool": {"technology", "technologies", "skills"},
+    "work": {"experience", "project", "projects", "job", "built"},
+    "experience": {"work", "project", "projects", "job"},
+    "certified": {"certification", "certifications", "certificate", "certs", "training"},
+    "certification": {"certifications", "certificate", "certs", "training"},
+    "certifications": {"certification", "certificate", "certs", "training"},
+    "certs": {"certification", "certifications", "certificate"},
+    "cert": {"certification", "certifications", "certificate", "training"},
+    "certificate": {"certification", "certifications", "certs"},
+    "training": {"certification", "certifications", "course", "learning"},
+    "study": {"education", "degree", "college", "university", "studied", "bca"},
+    "studied": {"education", "degree", "college", "university", "study", "bca"},
+    "education": {"study", "studied", "degree", "college", "university", "bca"},
+    "degree": {"education", "study", "college", "university", "bca"},
+    "college": {"education", "university", "degree", "bca"},
+    "contact": {"email", "reach", "linkedin", "github", "message", "hire"},
+    "email": {"contact", "reach", "mail"},
+    "reach": {"contact", "email", "message"},
+    "available": {"availability", "internship", "internships", "hiring", "open", "opportunities"},
+    "availability": {"available", "internship", "hiring", "open"},
+    "internship": {"availability", "available", "opportunities", "role"},
+    "job": {"availability", "role", "hiring", "opportunities"},
+    "cyber": {"cybersecurity", "security"},
+    "security": {"cybersecurity", "cyber"},
+    "lab": {"labs", "tryhackme", "hackthebox", "ctf", "practice"},
+    "labs": {"lab", "tryhackme", "hackthebox", "ctf", "practice"},
+    "ai": {"artificial", "intelligence", "machine", "ml"},
 }
 
 
-# ============================================================
-# PROJECT KEYWORDS
-# ============================================================
-
-PROJECT_CATEGORY_KEYWORDS = {
-
-    "completed": [
-        "completed project",
-        "completed projects",
-        "finished project",
-        "finished projects",
-        "built projects",
-        "built",
-        "has built",
-        "has completed",
-        "did vishnu build",
-        "what did vishnu build",
-        "what has vishnu built",
-        "projects he completed",
-        "projects he finished",
-        "projects completed",
-    ],
-
-    "ongoing": [
-        "ongoing project",
-        "ongoing projects",
-        "current project",
-        "current projects",
-        "currently working",
-        "currently building",
-        "working on",
-        "building now",
-        "in progress",
-        "under development",
-        "active project",
-        "active projects",
-        "what is vishnu working on",
-        "what is he working on",
-    ],
-
-    "upcoming": [
-        "upcoming project",
-        "upcoming projects",
-        "future project",
-        "future projects",
-        "planned project",
-        "planned projects",
-        "planning to build",
-        "plans to build",
-        "will build",
-        "next project",
-        "next projects",
-        "what will vishnu build",
-        "what does vishnu plan",
-    ],
-
-    "all": [
-        "all projects",
-        "every project",
-        "project list",
-        "projects list",
-        "projects vishnu has",
-        "projects vishnu worked on",
-        "project portfolio",
-        "complete project overview",
-        "project overview",
-        "show me his projects",
-        "show me vishnu projects",
-    ],
-}
+def _site_url(path: str = "") -> str:
+    base = settings.SITE_URL.rstrip("/")
+    return f"{base}/{path.lstrip('/')}" if path else base
 
 
-# ============================================================
-# PROJECT HELPERS
-# ============================================================
-
-def get_projects() -> dict[str, Any]:
-    """
-    Load the central projects.json file.
-    """
-    return load_source("projects.json")
+def _canonical(token: str) -> str:
+    """Very light stemming so 'projects', 'project' and 'project's' meet."""
+    if len(token) > 4 and token.endswith("ies"):
+        return token[:-3] + "y"
+    if len(token) > 4 and token.endswith("s") and not token.endswith("ss"):
+        return token[:-1]
+    return token
 
 
-def get_project_lists(
-    projects_data: dict[str, Any],
-) -> tuple[
-    list[dict[str, Any]],
-    list[dict[str, Any]],
-    list[dict[str, Any]],
-]:
-    """
-    Safely extract project categories.
-    """
-
-    completed = projects_data.get("completed", [])
-    ongoing = projects_data.get("ongoing", [])
-    upcoming = projects_data.get("upcoming", [])
-
-    if not isinstance(completed, list):
-        completed = []
-
-    if not isinstance(ongoing, list):
-        ongoing = []
-
-    if not isinstance(upcoming, list):
-        upcoming = []
-
-    return completed, ongoing, upcoming
-
-
-def find_specific_projects(
-    message: str,
-    projects: list[dict[str, Any]],
-) -> list[dict[str, Any]]:
-    """
-    Find projects explicitly mentioned by the visitor.
-
-    Supports:
-    - exact project names
-    - normalized names
-    - small spelling errors
-    """
-
-    normalized_message = normalize_text(message)
-
-    matches: list[dict[str, Any]] = []
-
-    for project in projects:
-        name = project.get("name")
-
-        if not isinstance(name, str) or not name.strip():
-            continue
-
-        normalized_name = normalize_text(name)
-
-        # Exact phrase match.
-        if normalized_name in normalized_message:
-            matches.append(project)
-            continue
-
-        # Fuzzy matching for project names.
-        if fuzzy_match(normalized_name, normalized_message, 0.84):
-            matches.append(project)
-
-    return matches
-
-
-# ============================================================
-# PROJECT INTENT DETECTION
-# ============================================================
-
-def detect_project_category(message: str) -> str | None:
-    """
-    Determine which project category the visitor is asking about.
-    """
-
-    normalized = normalize_text(message)
-
-    # More specific categories first.
-    for category in ("completed", "ongoing", "upcoming", "all"):
-
-        keywords = PROJECT_CATEGORY_KEYWORDS[category]
-
-        if any(
-            keyword in normalized
-            for keyword in keywords
-        ):
-            return category
-
-    # Additional natural-language patterns.
-
-    if (
-        re.search(r"\bwhat\b.*\bprojects?\b.*\bcompleted\b", normalized)
-        or
-        re.search(r"\bprojects?\b.*\bcompleted\b", normalized)
-        or
-        re.search(r"\bwhat\b.*\bhas\b.*\bbuilt\b", normalized)
-    ):
-        return "completed"
-
-    if (
-        re.search(r"\bwhat\b.*\bprojects?\b.*\bworking\b", normalized)
-        or
-        re.search(r"\bprojects?\b.*\bcurrently\b", normalized)
-    ):
-        return "ongoing"
-
-    if (
-        re.search(r"\bwhat\b.*\bprojects?\b.*\bplanned\b", normalized)
-        or
-        re.search(r"\bprojects?\b.*\bfuture\b", normalized)
-    ):
-        return "upcoming"
-
-    return None
-
-
-# ============================================================
-# TOPIC DETECTION
-# ============================================================
-
-def detect_topics(message: str) -> list[str]:
-    """
-    Detect all relevant knowledge topics in a query.
-
-    Multiple topics can be returned.
-
-    Example:
-        "Where did Vishnu study cybersecurity?"
-
-    may return:
-        ["education", "cybersecurity", "training"]
-    """
-
-    normalized = normalize_text(message)
-
-    detected: list[str] = []
-
-    for topic, keywords in INTENT_KEYWORDS.items():
-
-        for keyword in keywords:
-
-            if keyword.lower() in normalized:
-                detected.append(topic)
-                break
-
-    return detected
-
-
-# ============================================================
-# SPECIAL QUERY DETECTION
-# ============================================================
-
-def is_assistant_question(message: str) -> bool:
-    """
-    Detect questions about the chatbot itself.
-
-    These are handled primarily by the system prompt.
-    We intentionally don't inject portfolio information into
-    these questions.
-    """
-
-    normalized = normalize_text(message)
-
-    assistant_keywords = [
-        "who are you",
-        "what are you",
-        "what is this chatbot",
-        "what is this assistant",
-        "what technology powers you",
-        "what technology are you using",
-        "what model are you",
-        "which model are you",
-        "how were you built",
-        "how do you work",
-        "what powers you",
+def tokenize(text: str) -> list[str]:
+    lowered = text.lower().replace("&", " and ")
+    return [
+        _canonical(token)
+        for token in TOKEN_RE.findall(lowered)
+        if token not in STOPWORDS and len(token) >= 2
     ]
 
-    return any(
-        keyword in normalized
-        for keyword in assistant_keywords
+
+def expand_tokens(tokens: Iterable[str]) -> set[str]:
+    expanded: set[str] = set()
+    for token in tokens:
+        expanded.add(token)
+        expanded.update(
+            _canonical(synonym) for synonym in SYNONYMS.get(token, set())
+        )
+    return expanded
+
+
+def _normalize(text: str) -> str:
+    return " ".join(tokenize(text))
+
+
+def _profile_document(profile: Profile) -> Document:
+    return Document(
+        key="profile",
+        label="About Vishnu",
+        url=_site_url("#about"),
+        kind="profile",
+        text=(
+            f"{profile.name} is a cybersecurity student and software developer "
+            f"based in {profile.location}. Headline: {profile.headline}. "
+            f"Target role: {profile.target_role}. "
+            f"Availability: {profile.availability or 'not specified'}. "
+            f"About: {profile.bio}"
+        ),
+        answer=(
+            f"{profile.name} is a BCA graduate and cybersecurity student based in "
+            f"{profile.location}, working toward a {profile.target_role} role. "
+            f"{profile.availability}"
+        ).strip(),
     )
 
 
-def is_greeting(message: str) -> bool:
-    """
-    Detect simple greetings.
-    """
-
-    normalized = normalize_text(message)
-
-    greetings = {
-        "hi",
-        "hello",
-        "hey",
-        "hai",
-        "hii",
-        "hiii",
-        "good morning",
-        "good afternoon",
-        "good evening",
-    }
-
-    return normalized in greetings
-
-
-# ============================================================
-# SOURCE PRIORITY
-# ============================================================
-
-SOURCE_PRIORITY = [
-    "specific_project",
-    "completed_projects",
-    "ongoing_projects",
-    "upcoming_projects",
-    "identity",
-    "profile",
-    "education",
-    "cybersecurity",
-    "training",
-    "skills",
-    "experience",
-    "career",
-    "interests",
-    "contact",
-    "faq",
-]
-
-
-def sort_sources(sources: list[str]) -> list[str]:
-    """
-    Return sources in deterministic priority order.
-    """
-
-    unique_sources = list(dict.fromkeys(sources))
-
-    return sorted(
-        unique_sources,
-        key=lambda source: (
-            SOURCE_PRIORITY.index(source)
-            if source in SOURCE_PRIORITY
-            else 999
+def _contact_document(profile: Profile) -> Document:
+    links = [profile.email]
+    if profile.github_url:
+        links.append(f"GitHub: {profile.github_url}")
+    if profile.linkedin_url:
+        links.append(f"LinkedIn: {profile.linkedin_url}")
+    if profile.website_url:
+        links.append(f"Website: {profile.website_url}")
+    return Document(
+        key="contact",
+        label="Contact Vishnu",
+        url=_site_url("#contact"),
+        kind="contact",
+        text=(
+            f"Contact {profile.name}. Email: {profile.email}. "
+            + ". ".join(links)
+            + f". A contact form is available at {_site_url('#contact')}."
         ),
     )
 
 
-# ============================================================
-# MAIN RETRIEVAL FUNCTION
-# ============================================================
+def _project_documents() -> list[Document]:
+    documents = []
+    for project in Project.objects.filter(visible=True).order_by("order", "pk"):
+        highlights = ", ".join(project.highlight_list)
+        links = []
+        if project.repo_url:
+            links.append(f"Repository: {project.repo_url}")
+        if project.demo_url:
+            links.append(f"Demo: {project.demo_url}")
 
-def retrieve_context(message: str) -> dict[str, Any]:
-    """
-    Retrieve verified portfolio information relevant to the
-    visitor's question.
+        text = (
+            f"Vishnu's project: {project.title}. "
+            f"Status: {project.get_status_display()}."
+        )
+        if project.status == Project.Status.ONGOING and project.progress is not None:
+            text += f" Roughly {project.progress}% complete."
+        text += f" Summary: {project.summary}"
+        if project.description:
+            text += f" Details: {project.description}"
+        if project.tech_list:
+            text += f" Technologies: {', '.join(project.tech_list)}."
+        if highlights:
+            text += f" Highlights: {highlights}."
+        if links:
+            text += " " + " ".join(links)
 
-    IMPORTANT:
-    This function never generates information.
-    It only retrieves existing verified knowledge.
-    """
+        documents.append(
+            Document(
+                key=f"project:{project.slug}",
+                label=project.title,
+                url=_site_url(f"projects/{project.slug}"),
+                kind=f"project_{project.status}",
+                text=text,
+                answer=project.summary,
+            )
+        )
+    return documents
 
-    normalized_message = normalize_text(message)
 
-    context: dict[str, Any] = {}
-    sources: list[str] = []
+def _skill_documents() -> list[Document]:
+    documents = []
+    for category in SkillCategory.objects.filter(visible=True).order_by("order", "pk"):
+        skills = [skill.name for skill in category.skills.all() if skill.visible]
+        if not skills:
+            continue
+        documents.append(
+            Document(
+                key=f"skills:{category.pk}",
+                label=f"Skills — {category.name}",
+                url=_site_url("#skills"),
+                kind="skills",
+                text=(
+                    f"Vishnu's skills in {category.name}: {', '.join(skills)}. "
+                    f"{category.description}"
+                ),
+                answer=(
+                    f"In {category.name}, Vishnu works with {', '.join(skills)}."
+                ),
+            )
+        )
+    return documents
 
-    # --------------------------------------------------------
-    # Empty query
-    # --------------------------------------------------------
 
-    if not normalized_message:
-        return {
-            "context": {},
-            "sources": ["unknown"],
-        }
+def build_corpus() -> list[Document]:
+    profile = Profile.load()
+    documents = [_profile_document(profile), _contact_document(profile)]
 
-    # --------------------------------------------------------
-    # Greetings
-    # --------------------------------------------------------
+    if profile.resume:
+        documents.append(
+            Document(
+                key="resume",
+                label="Resume",
+                url=_site_url("#resume"),
+                kind="resume",
+                text=(
+                    "Vishnu's CV/resume is available as a PDF download from the "
+                    "portfolio."
+                ),
+            )
+        )
 
-    if is_greeting(normalized_message):
-        return {
-            "context": {},
-            "sources": ["greeting"],
-        }
+    documents.extend(_skill_documents())
+    documents.extend(_project_documents())
 
-    # --------------------------------------------------------
-    # Assistant questions
-    # --------------------------------------------------------
+    for education in Education.objects.filter(visible=True).order_by("order", "pk"):
+        documents.append(
+            Document(
+                key=f"education:{education.pk}",
+                label="Education",
+                url=_site_url("#education"),
+                kind="education",
+                text=(
+                    f"Education: {education.degree} at {education.institution}. "
+                    f"{('University: ' + education.university + '. ') if education.university else ''}"
+                    f"Period: {education.period or 'not specified'}. "
+                    f"{education.description}"
+                ),
+            )
+        )
 
-    if is_assistant_question(normalized_message):
-        return {
-            "context": {},
-            "sources": ["assistant"],
-        }
+    for experience in Experience.objects.filter(visible=True).order_by("order", "pk"):
+        documents.append(
+            Document(
+                key=f"experience:{experience.pk}",
+                label="Experience",
+                url=_site_url("#journey"),
+                kind="experience",
+                text=(
+                    f"Experience: {experience.role} at {experience.organization} "
+                    f"({experience.get_kind_display()}, {experience.period}). "
+                    f"{experience.summary} {' '.join(experience.highlight_list)}"
+                ),
+            )
+        )
 
-    # --------------------------------------------------------
-    # Load projects once.
-    # --------------------------------------------------------
+    certifications = list(
+        Certification.objects.filter(visible=True).order_by("order", "pk")
+    )
+    for certification in certifications:
+        if certification.status == Certification.Status.IN_PROGRESS:
+            status_text = (
+                "training in progress — not a completed certification"
+            )
+        elif certification.status == Certification.Status.PLANNED:
+            status_text = "planned — not started or completed"
+        else:
+            status_text = "completed"
+        issuer = f"Issuer: {certification.issuer}. " if certification.issuer else ""
+        documents.append(
+            Document(
+                key=f"certification:{certification.pk}",
+                label=certification.name,
+                url=_site_url("#certifications"),
+                kind="certification",
+                text=(
+                    f"Certification/training: {certification.name}. {issuer}"
+                    f"Status: {status_text}. "
+                    f"Category: {certification.get_category_display()}."
+                ),
+                answer=(
+                    f"{certification.name} is {status_text}."
+                    if certification.status != Certification.Status.COMPLETED
+                    else f"{certification.name} is completed."
+                ),
+            )
+        )
 
-    projects_data = get_projects()
+    if certifications:
+        names = ", ".join(c.name for c in certifications)
+        documents.append(
+            Document(
+                key="certifications:summary",
+                label="Certifications & training",
+                url=_site_url("#certifications"),
+                kind="certification",
+                text=(
+                    f"Vishnu's certifications and training: {names}. "
+                    "Unless an item is marked completed, it is in progress or "
+                    "planned and must not be described as awarded."
+                ),
+                answer=(
+                    f"Vishnu is working through {len(certifications)} "
+                    "certifications and training courses, including "
+                    f"{', '.join(c.name for c in certifications[:4])} and "
+                    "others. All are in progress unless marked completed."
+                ),
+            )
+        )
 
-    completed_projects, ongoing_projects, upcoming_projects = (
-        get_project_lists(projects_data)
+    for achievement in Achievement.objects.filter(visible=True).order_by("order", "pk"):
+        documents.append(
+            Document(
+                key=f"achievement:{achievement.pk}",
+                label=achievement.title,
+                url=_site_url("#achievements"),
+                kind="achievement",
+                text=(
+                    f"Lab/achievement: {achievement.title}. "
+                    f"{('Organisation: ' + achievement.organization + '. ') if achievement.organization else ''}"
+                    f"{achievement.description}"
+                ),
+            )
+        )
+
+    for faq in FAQ.objects.filter(visible=True).order_by("order", "pk"):
+        documents.append(
+            Document(
+                key=f"faq:{faq.pk}",
+                label=faq.question,
+                url=_site_url("#faq"),
+                kind="faq",
+                text=f"FAQ. Question: {faq.question} Answer: {faq.answer}",
+                answer=faq.answer,
+            )
+        )
+
+    return documents
+
+
+PROJECT_STATUS_TERMS = {
+    "completed": {"completed", "complete", "shipped", "finished", "done"},
+    "ongoing": {"ongoing", "current", "active", "developing", "working"},
+    "upcoming": {"upcoming", "planned", "future", "next", "roadmap"},
+}
+
+KIND_BOOST_TERMS = {
+    "profile": {"who", "about", "background", "introduction", "bio"},
+    "contact": {"contact", "email", "reach", "linkedin", "github", "hire", "message"},
+    "skills": {"skill", "skills", "technology", "technologies", "tools", "stack"},
+    "education": {"education", "study", "studied", "degree", "college", "university", "bca"},
+    "certification": {"certification", "certifications", "certs", "certified", "training", "course"},
+    "achievement": {"lab", "labs", "tryhackme", "hackthebox", "ctf", "achievement"},
+}
+
+
+def _kind_boost(kind: str, query_lower: str, query_tokens: set[str]) -> float:
+    query_words = set(re.findall(r"[a-z]+", query_lower))
+    available = query_tokens | query_words
+    for prefix, terms in KIND_BOOST_TERMS.items():
+        if kind.startswith(prefix) and available & terms:
+            return 2.5
+    if kind.startswith("project") and available & {
+        "project",
+        "projects",
+        "built",
+        "portfolio",
+    }:
+        return 3.5
+    return 0.0
+
+
+def _fuzzy_hit(token: str, candidates: set[str]) -> bool:
+    if len(token) < 5:
+        return False
+    return any(
+        SequenceMatcher(None, token, candidate).ratio() >= 0.88
+        for candidate in candidates
+        if len(candidate) >= 4
     )
 
-    all_projects = (
-        completed_projects
-        + ongoing_projects
-        + upcoming_projects
-    )
 
-    # --------------------------------------------------------
-    # Specific project detection
-    # --------------------------------------------------------
-
-    specific_projects = find_specific_projects(
-        normalized_message,
-        all_projects,
-    )
-
-    if specific_projects:
-        sources.append("specific_project")
-        context["specific_project"] = specific_projects
-
-    # --------------------------------------------------------
-    # Project category detection
-    # --------------------------------------------------------
-
-    project_category = detect_project_category(
-        normalized_message
-    )
-
-    if project_category == "completed":
-        sources.append("completed_projects")
-        context["completed_projects"] = completed_projects
-
-    elif project_category == "ongoing":
-        sources.append("ongoing_projects")
-        context["ongoing_projects"] = ongoing_projects
-
-    elif project_category == "upcoming":
-        sources.append("upcoming_projects")
-        context["upcoming_projects"] = upcoming_projects
-
-    elif project_category == "all":
-        sources.append("projects")
-
-        context["projects"] = {
-            "completed": completed_projects,
-            "ongoing": ongoing_projects,
-            "upcoming": upcoming_projects,
-        }
-
-    # --------------------------------------------------------
-    # Topic detection
-    # --------------------------------------------------------
-
-    topics = detect_topics(normalized_message)
-
-    # --------------------------------------------------------
-    # Identity
-    # --------------------------------------------------------
-
-    if (
-        "identity" in topics
-        or "profile" in topics
-        or (
-            "vishnu" in normalized_message
-            and not project_category
-            and not topics
-        )
-    ):
-        personal_data = load_source("personal.json")
-
-        if personal_data:
-            sources.append("identity")
-            context["identity"] = personal_data
-
-    # --------------------------------------------------------
-    # Profile
-    # --------------------------------------------------------
-
-    if "profile" in topics:
-
-        profile_data = load_source("profile.json")
-
-        if profile_data:
-            sources.append("profile")
-            context["profile"] = profile_data
-
-    # --------------------------------------------------------
-    # Location
-    #
-    # Location is usually stored in personal.json.
-    # Retrieve it when location-related questions appear.
-    # --------------------------------------------------------
-
-    if "location" in topics:
-
-        personal_data = load_source("personal.json")
-
-        if personal_data:
-            sources.append("identity")
-
-            # Don't duplicate the entire object if identity
-            # has already been loaded.
-            context.setdefault(
-                "identity",
-                personal_data,
-            )
-
-    # --------------------------------------------------------
-    # Education
-    # --------------------------------------------------------
-
-    if "education" in topics:
-
-        education_data = load_source("education.json")
-
-        if education_data:
-            sources.append("education")
-            context["education"] = education_data
-
-    # --------------------------------------------------------
-    # Skills
-    # --------------------------------------------------------
-
-    if "skills" in topics:
-
-        skills_data = load_source("skills.json")
-
-        if skills_data:
-            sources.append("skills")
-            context["skills"] = skills_data
-
-    # --------------------------------------------------------
-    # Cybersecurity
-    #
-    # Cybersecurity information may be spread across multiple
-    # verified files.
-    # --------------------------------------------------------
-
-    if "cybersecurity" in topics:
-
-        cybersecurity_data = load_source(
-            "cybersecurity.json"
-        )
-
-        if cybersecurity_data:
-            sources.append("cybersecurity")
-            context["cybersecurity"] = cybersecurity_data
-
-        # Cybersecurity questions can also be answered from
-        # training information if that is where the portfolio
-        # stores the relevant information.
-        training_data = load_source("training.json")
-
-        if training_data:
-            sources.append("training")
-            context["training"] = training_data
-
-    # --------------------------------------------------------
-    # Training / Certifications
-    # --------------------------------------------------------
-
-    if "training" in topics:
-
-        training_data = load_source("training.json")
-
-        if training_data:
-            sources.append("training")
-            context["training"] = training_data
-
-    # --------------------------------------------------------
-    # Experience
-    # --------------------------------------------------------
-
-    if "experience" in topics:
-
-        experience_data = load_source(
-            "experience.json"
-        )
-
-        if experience_data:
-            sources.append("experience")
-            context["experience"] = experience_data
-
-    # --------------------------------------------------------
-    # Career
-    # --------------------------------------------------------
-
-    if "career" in topics:
-
-        career_data = load_source(
-            "career.json"
-        )
-
-        if career_data:
-            sources.append("career")
-            context["career"] = career_data
-
-    # --------------------------------------------------------
-    # Interests / Hobbies
-    # --------------------------------------------------------
-
-    if "interests" in topics:
-
-        interests_data = load_source(
-            "interests.json"
-        )
-
-        if interests_data:
-            sources.append("interests")
-            context["interests"] = interests_data
-
-    # --------------------------------------------------------
-    # Contact
-    # --------------------------------------------------------
-
-    if "contact" in topics:
-
-        personal_data = load_source("personal.json")
-
-        if personal_data:
-            sources.append("contact")
-
-            context.setdefault(
-                "contact",
-                personal_data,
-            )
-
-    # --------------------------------------------------------
-    # FAQ
-    # --------------------------------------------------------
-
-    if "faq" in topics:
-
-        faq_data = load_source("faq.json")
-
-        if faq_data:
-            sources.append("faq")
-            context["faq"] = faq_data
-
-    # --------------------------------------------------------
-    # Generic project question
-    #
-    # If someone simply asks:
-    # "Tell me about Vishnu's projects"
-    #
-    # provide project categories.
-    # --------------------------------------------------------
-
-    if (
-        re.search(r"\bprojects?\b", normalized_message)
-        and not project_category
-        and not specific_projects
-    ):
-
-        sources.append("projects")
-
-        context["projects"] = {
-            "completed": completed_projects,
-            "ongoing": ongoing_projects,
-            "upcoming": upcoming_projects,
-        }
-
-    # --------------------------------------------------------
-    # Broad "tell me about Vishnu" query
-    #
-    # Give the model a useful but controlled profile.
-    # Do NOT dump everything.
-    # --------------------------------------------------------
-
-    broad_about_patterns = [
-        "tell me about vishnu",
-        "about vishnu",
-        "introduce vishnu",
-        "give me an overview of vishnu",
-        "give me a brief overview",
-        "who is vishnu",
-    ]
-
-    if any(
-        pattern in normalized_message
-        for pattern in broad_about_patterns
-    ):
-
-        personal_data = load_source("personal.json")
-
-        if personal_data:
-            sources.append("identity")
-            context.setdefault(
-                "identity",
-                personal_data,
-            )
-
-        education_data = load_source("education.json")
-
-        if education_data:
-            sources.append("education")
-            context.setdefault(
-                "education",
-                education_data,
-            )
-
-        skills_data = load_source("skills.json")
-
-        if skills_data:
-            sources.append("skills")
-            context.setdefault(
-                "skills",
-                skills_data,
-            )
-
-    # --------------------------------------------------------
-    # Unknown
-    # --------------------------------------------------------
-
-    if not sources:
-        sources.append("unknown")
-
-    # --------------------------------------------------------
-    # Clean source list
-    # --------------------------------------------------------
-
-    sources = sort_sources(sources)
-
-    return {
-        "context": context,
-        "sources": sources,
+def retrieve_context(message: str, limit: int | None = None) -> RetrievalResult:
+    limit = limit or settings.CHATBOT_RETRIEVAL_LIMIT
+    direct_tokens = set(tokenize(message))
+    query_tokens = expand_tokens(direct_tokens)
+    if not query_tokens:
+        return RetrievalResult(documents=[], sources=[])
+
+    corpus = build_corpus()
+    if not corpus:
+        return RetrievalResult(documents=[], sources=[])
+
+    document_frequency: Counter[str] = Counter()
+    tokenized_docs: dict[str, set[str]] = {}
+    for document in corpus:
+        tokens = set(tokenize(f"{document.label} {document.text}"))
+        tokenized_docs[document.key] = tokens
+        document_frequency.update(tokens)
+
+    total = len(corpus)
+    idf = {
+        token: math.log((total + 1) / (count + 1)) + 1
+        for token, count in document_frequency.items()
     }
+
+    query_lower = message.lower()
+    query_normalized = _normalize(message)
+    scored: list[tuple[float, Document]] = []
+
+    for document in corpus:
+        tokens = tokenized_docs[document.key]
+        matched_direct = direct_tokens & tokens
+        matched_synonym = (query_tokens - direct_tokens) & tokens
+
+        fuzzy_matches = {
+            token
+            for token in direct_tokens - tokens
+            if _fuzzy_hit(token, tokens)
+        }
+
+        if not matched_direct and not matched_synonym and not fuzzy_matches:
+            continue
+
+        coverage = len(matched_direct | fuzzy_matches) / max(
+            len(direct_tokens), 1
+        )
+
+        score = sum(idf.get(token, 1.0) for token in matched_direct)
+        score += sum(0.35 * idf.get(token, 1.0) for token in matched_synonym)
+        score += sum(0.5 * idf.get(token, 1.0) for token in fuzzy_matches)
+        score += coverage * 5.0
+        score += _kind_boost(document.kind, query_lower, query_tokens)
+
+        for status, terms in PROJECT_STATUS_TERMS.items():
+            if direct_tokens & terms and document.kind == f"project_{status}":
+                score += 5.0
+
+        label_normalized = _normalize(document.label)
+        if query_normalized and (
+            query_normalized in _normalize(document.text)
+            or query_normalized in label_normalized
+        ):
+            score += 4.0
+
+        title_overlap = direct_tokens & set(tokenize(document.label))
+        score += len(title_overlap) * 3.0
+
+        if (
+            coverage >= 0.34
+            or len(matched_direct) >= 2
+            or len(matched_synonym) >= 2
+            or (not direct_tokens and matched_synonym)
+        ):
+            scored.append((score, document))
+
+    scored.sort(key=lambda item: item[0], reverse=True)
+    top = [document for _, document in scored[:limit]]
+
+    sources: list[dict[str, str]] = []
+    seen: set[tuple[str, str]] = set()
+    for document in top:
+        key = (document.label, document.url)
+        if key in seen:
+            continue
+        seen.add(key)
+        sources.append(
+            {
+                "label": document.label,
+                "url": document.url,
+                "kind": document.kind,
+            }
+        )
+        if len(sources) >= 4:
+            break
+
+    return RetrievalResult(documents=top, sources=sources)

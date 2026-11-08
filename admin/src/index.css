@@ -1,0 +1,93 @@
+@import "tailwindcss";
+@import "@fontsource/ibm-plex-sans/400.css";
+@import "@fontsource/ibm-plex-sans/500.css";
+@import "@fontsource/ibm-plex-sans/600.css";
+@import "@fontsource/ibm-plex-sans/700.css";
+@import "@fontsource/ibm-plex-mono/400.css";
+@import "@fontsource/ibm-plex-mono/500.css";
+@import "@fontsource/ibm-plex-mono/600.css";
+
+@theme {
+  --color-ink: #080b0f;
+  --color-panel: #0d1218;
+  --color-panel-2: #111820;
+  --color-line: #1d2733;
+  --color-fog: #8b98a7;
+  --color-paper: #e8eef5;
+  --color-flame: #ff8c42;
+  --color-mint: #3ed6b5;
+  --color-violet: #a78bfa;
+  --color-danger: #ff6b5e;
+
+  --font-sans: "IBM Plex Sans", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, SFMono-Regular, monospace;
+}
+
+@layer base {
+  body {
+    @apply bg-ink font-sans text-paper antialiased;
+    background-image:
+      radial-gradient(55rem 35rem at 85% -15%, rgba(62, 214, 181, 0.06), transparent 60%),
+      radial-gradient(40rem 28rem at 0% 0%, rgba(255, 140, 66, 0.05), transparent 55%);
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--color-mint);
+    outline-offset: 2px;
+  }
+
+  ::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+  ::-webkit-scrollbar-track {
+    background: #0a0e13;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: #24303d;
+    border-radius: 999px;
+    border: 2px solid #0a0e13;
+  }
+}
+
+@layer components {
+  .card {
+    @apply rounded-2xl border border-line bg-panel/80;
+  }
+
+  .label {
+    @apply mb-1.5 block font-mono text-[10.5px] tracking-[0.12em] text-fog uppercase;
+  }
+
+  .input {
+    @apply w-full rounded-lg border border-line bg-ink/70 px-3 py-2 text-sm text-paper placeholder:text-fog/40 transition-colors focus:border-mint/60 focus:outline-none;
+  }
+
+  .btn {
+    @apply inline-flex items-center justify-center gap-2 rounded-lg px-3.5 py-2 text-sm font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-50;
+  }
+
+  .btn-primary {
+    @apply inline-flex items-center justify-center gap-2 rounded-lg bg-flame px-3.5 py-2 text-sm font-medium text-[#160b04] transition-colors hover:bg-[#ffa163] disabled:cursor-not-allowed disabled:opacity-50;
+  }
+
+  .btn-ghost {
+    @apply inline-flex items-center justify-center gap-2 rounded-lg border border-line bg-panel-2/60 px-3.5 py-2 text-sm font-medium text-paper transition-colors hover:border-fog/40 disabled:cursor-not-allowed disabled:opacity-50;
+  }
+
+  .btn-danger {
+    @apply inline-flex items-center justify-center gap-2 rounded-lg border border-danger/40 bg-danger/10 px-3.5 py-2 text-sm font-medium text-danger transition-colors hover:bg-danger/20 disabled:cursor-not-allowed disabled:opacity-50;
+  }
+
+  .icon-btn {
+    @apply inline-flex h-8 w-8 items-center justify-center rounded-lg border border-line text-fog transition-colors hover:border-fog/40 hover:text-paper;
+  }
+
+  .th {
+    @apply px-4 py-2.5 text-left font-mono text-[10px] font-medium tracking-[0.12em] text-fog uppercase;
+  }
+
+  .td {
+    @apply px-4 py-3 align-top text-sm text-paper/90;
+  }
+}

@@ -1,0 +1,309 @@
+# Vishnu Anilkumar — full portfolio
+
+Source: https://vishnuanilkumar.in
+
+## Profile
+
+- Headline: Cybersecurity Student · Aspiring SOC Analyst · Ethical Hacking & Security Enthusiast
+- Target role: SOC Analyst
+- Location: Kerala, India
+- Availability: Open to SOC analyst, security intern, and entry-level cybersecurity roles.
+- Email: vishnuanil2k05@gmail.com
+- GitHub: https://github.com/Vishnu-Anilkumar-Git
+- LinkedIn: https://www.linkedin.com/in/vishnu-anilkumar-1083b038b
+
+I'm a BCA graduate based in Kerala, India, with a strong interest in cybersecurity, ethical hacking, threat intelligence, and security operations. My background in software development helps me understand both how applications are built — and how they can be attacked and secured.
+
+I completed my Bachelor of Computer Applications at BVM Holy Cross College, Cherpunkal, affiliated with Mahatma Gandhi University. I'm currently developing my skills across networking, Linux, penetration testing, threat intelligence, security monitoring, and AI-assisted security systems. I enjoy building practical projects rather than limiting myself to theory, with a long-term goal of working as a cybersecurity analyst and progressing into advanced security engineering.
+
+## Projects
+
+### CarePlus — Hospital Appointment Booking System
+
+Status: Completed
+Timeline: Completed
+URL: https://vishnuanilkumar.in/projects/careplus-hospital-appointment-booking-system
+Stack: PHP, MariaDB
+
+A full-stack hospital appointment management platform to manage patients, doctors, appointments, and administrative workflows.
+
+Full-stack appointment management for patients, doctors and admins
+
+CarePlus is a full-stack hospital appointment booking system built around the daily workflows of a small hospital: patients book appointments, doctors manage their schedules, and administrators oversee doctors, patients and bookings from one place.
+
+The project was built to practise complete CRUD application design — authentication, role-aware dashboards, relational data modelling and a database-backed booking flow — rather than a single-page demo.
+
+Highlights:
+- Patient, doctor and admin workflows
+- Appointment booking backed by a relational schema
+- Role-aware dashboards
+
+
+### Kerala Tourism Website
+
+Status: Completed
+Timeline: Completed
+URL: https://vishnuanilkumar.in/projects/kerala-tourism-website
+Stack: Django, Python
+
+A tourism platform showcasing Kerala's destinations, attractions, and travel information with a dynamic backend.
+
+Destination and travel information platform
+
+A tourism platform for exploring Kerala's destinations and travel information. The site pairs a browsable front end with a dynamic Django backend, so destination content is managed as structured data instead of hand-written pages.
+
+Highlights:
+- Structured destination content
+- Server-rendered Django views
+
+
+### Precision Builders — Intelligent Construction Platform
+
+Status: Completed
+Timeline: Completed
+URL: https://vishnuanilkumar.in/projects/precision-builders-intelligent-construction-platform
+Stack: Python, Django, Machine Learning, SQLite
+
+A construction collaboration platform combining project management with ML-based cost and time prediction to assist planning.
+
+Project collaboration with ML-based cost and time prediction
+
+Precision Builders combines construction project management with machine-learning estimates for cost and schedule. The platform is aimed at planning: teams keep project information in one place and use model predictions as a second opinion on cost and duration.
+
+It was an exercise in connecting a conventional Django application to a scikit-learn prediction pipeline, including preparing training data and surfacing predictions inside the UI.
+
+Highlights:
+- Construction project management workflow
+- ML-assisted cost and time estimates
+
+
+### OffGrid — E-Commerce Clothing Store
+
+Status: Ongoing
+Timeline: Ongoing
+URL: https://vishnuanilkumar.in/projects/offgrid-e-commerce-clothing-store
+Stack: Python, Django, PostgreSQL/MySQL, Razorpay
+
+A full-featured Django clothing store: product management, filtering, sorting, stock indicators, reviews, ratings, coupons, delivery estimates, and Razorpay payments.
+
+Django storefront with catalogue, reviews, coupons and payments
+
+OffGrid is a complete clothing storefront built with Django. The catalogue supports filtering and sorting, stock indicators, product reviews and ratings, coupon codes, delivery estimates and Razorpay checkout.
+
+The interesting part is the depth: a real storefront needs inventory state, pricing rules, order handling and payment integration to work together, and this project is where those pieces are being built out.
+
+Highlights:
+- Catalogue filtering, sorting and stock state
+- Reviews, ratings and coupons
+- Razorpay payment integration
+
+
+### ASI — AI Security Platform
+
+Status: Ongoing
+Timeline: Ongoing
+URL: https://vishnuanilkumar.in/projects/asi-ai-security-platform
+Stack: Python, AI/ML, Computer Vision, Raspberry Pi
+
+An intelligent physical-security platform combining cameras, sensors, and network monitoring to detect suspicious activity and generate alerts.
+
+Camera, sensor and network monitoring with AI alerts
+
+ASI is an AI security platform that brings cameras, sensors and network monitoring into one detection pipeline. Instead of treating each source separately, it correlates what the sensors see and generates alerts for activity that looks suspicious.
+
+The project sits at the intersection of computer vision, sensor input and security monitoring — the same overlap between physical and digital security that the rest of this portfolio explores.
+
+Highlights:
+- Camera and sensor fusion pipeline
+- AI-assisted suspicious-activity alerts
+
+
+### Threat Intelligence Dashboard
+
+Status: Ongoing
+Timeline: Ongoing
+URL: https://vishnuanilkumar.in/projects/threat-intelligence-dashboard
+Stack: Python, Threat Intel APIs
+
+A security dashboard for collecting, processing, and visualizing threat intel — helping analysts monitor IOCs, suspicious infrastructure, and emerging threats.
+
+Collect, process and visualise threat intelligence
+
+A dashboard for gathering threat intelligence feeds, processing indicators and presenting them in a form an analyst can scan quickly. It focuses on the collector-to-visualisation path: normalise incoming IOCs, track suspicious infrastructure and make emerging threats visible without digging through raw feeds.
+
+Highlights:
+- IOC collection and normalisation
+- Analyst-facing threat visualisation
+
+
+### JARVIS — Personal AI Assistant
+
+Status: Ongoing
+Timeline: Ongoing
+URL: https://vishnuanilkumar.in/projects/jarvis-personal-ai-assistant
+Stack: Python, Faster-Whisper, Silero VAD, LLMs
+
+A local personal AI assistant focused on natural voice interaction, speech recognition, and future integration with security workflows.
+
+Local voice assistant with speech recognition
+
+JARVIS is a locally running assistant built around voice interaction: speech recognition, voice activity detection and an LLM for responses. Running locally keeps audio off third-party services and makes the assistant available without an internet round trip.
+
+The long-term direction is to connect it to security workflows, so routine queries and lab tasks can be handled conversationally.
+
+Highlights:
+- Local speech-to-text with Faster-Whisper
+- Voice activity detection with Silero VAD
+- Local LLM responses
+
+
+### AI-Based Property Security & Sensor Fusion
+
+Status: Ongoing
+Timeline: Ongoing
+URL: https://vishnuanilkumar.in/projects/ai-based-property-security-sensor-fusion
+Stack: AI/ML, mmWave Radar, Raspberry Pi, Sensor Fusion
+
+Research combining cameras, mmWave radar, and sensors with AI to identify meaningful human movement vs. normal environmental activity.
+
+Telling human movement apart from environmental noise
+
+A research build that combines cameras, mmWave radar and other sensors with AI to distinguish meaningful human movement from ordinary environmental activity. The hard problem is false positives: a curtain moving in the wind should not trigger the same response as a person crossing a room.
+
+The project explores sensor fusion as a way to make that distinction more reliable than any single sensor on its own.
+
+Highlights:
+- Multi-sensor fusion
+- Human movement vs. environmental noise classification
+
+
+### CTI Platform
+
+Status: Upcoming
+Timeline: Planned
+URL: https://vishnuanilkumar.in/projects/cti-platform
+Stack: Python, Threat Intelligence, Automation
+
+A complete cyber threat intelligence platform for collecting, correlating, analyzing, and visualizing threats with automated IOC enrichment.
+
+End-to-end cyber threat intelligence platform
+
+A planned cyber threat intelligence platform covering the full lifecycle: collection from multiple feeds, correlation across indicators, analysis and visualisation, with automated IOC enrichment to add context to raw data.
+
+
+### AI SOC Analyst
+
+Status: Upcoming
+Timeline: Planned
+URL: https://vishnuanilkumar.in/projects/ai-soc-analyst
+Stack: Python, LLMs, SIEM Concepts
+
+An AI-assisted SOC platform to analyze security events, prioritize alerts, correlate indicators, and assist analysts with investigation.
+
+AI-assisted alert triage and investigation
+
+A planned SOC platform that uses AI to help with the part of analyst work that scales badly: reading every alert, ranking what matters and correlating indicators before an investigation starts. The goal is assistance for the analyst, not replacement of judgement.
+
+
+### Advanced Network Security Monitoring System
+
+Status: Upcoming
+Timeline: Planned
+URL: https://vishnuanilkumar.in/projects/advanced-network-security-monitoring-system
+Stack: Python, Networking, Packet Analysis
+
+Real-time network monitoring and threat detection capable of identifying suspicious traffic and anomalous behavior.
+
+Real-time traffic monitoring and anomaly detection
+
+A planned network monitoring system for watching traffic in real time, spotting suspicious flows and flagging behaviour that deviates from a baseline.
+
+
+### Automated Vulnerability Assessment Platform
+
+Status: Upcoming
+Timeline: Planned
+URL: https://vishnuanilkumar.in/projects/automated-vulnerability-assessment-platform
+Stack: Python, Nmap, Automation, Reporting
+
+A platform to automate reconnaissance, vulnerability discovery, service enumeration, and reporting across authorized systems.
+
+Recon, enumeration and reporting in one pipeline
+
+A planned platform that automates the repetitive parts of an authorized assessment: reconnaissance, service enumeration, vulnerability discovery and consistent reporting. Scope and authorization are treated as a first-class part of the workflow.
+
+
+### AI-Powered Digital Security Lab
+
+Status: Upcoming
+Timeline: Planned
+URL: https://vishnuanilkumar.in/projects/ai-powered-digital-security-lab
+Stack: Kali Linux, Virtualisation, Networking
+
+A personal cybersecurity lab: virtualized environments, Kali Linux, vulnerable machines, network monitoring, and AI-assisted experimentation.
+
+A personal lab for hands-on security practice
+
+A planned home security lab built on virtualised environments, Kali Linux, intentionally vulnerable machines and network monitoring, with AI-assisted experimentation layered on top. It is the practice ground for the techniques used in the other projects.
+
+
+## Education
+
+- Bachelor of Computer Applications — BVM Holy Cross College, Cherpunkal (completed)
+  Bachelor of Computer Applications at BVM Holy Cross College, Cherpunkal, affiliated with Mahatma Gandhi University. Built the software-development foundation behind the projects on this site.
+
+## Skills
+
+- Programming & Development: Python, JavaScript, Java, C / C++, PHP, HTML / CSS, Django, Flask, React, Tailwind CSS, Bootstrap
+- Cybersecurity: Ethical Hacking, Network Security, Vulnerability Assessment, Threat Intelligence, SOC / Security Operations, Linux & Kali Linux, Network Scanning, Web App Security, Mobile App Security, OSINT, Incident Detection & Analysis
+- Tools & Technologies: Nmap, Wireshark, Burp Suite, Metasploit, MobSF, Termux, Git / GitHub, Docker, XAMPP, MySQL / MariaDB, PostgreSQL, VS Code
+- AI, Data & Security Projects: Python AI/ML, Scikit-learn, Pandas, OpenAI APIs, Whisper / Faster-Whisper, Ollama, Computer Vision, AI-Assisted Threat Detection
+
+## Certifications and training
+
+- Professional Diploma in Cyber Security —  (In progress)
+- CompTIA A+ — CompTIA (In progress)
+- CompTIA Network+ — CompTIA (In progress)
+- CompTIA CySA+ — CompTIA (In progress)
+- CCNA — Cisco (In progress)
+- CCNP — Cisco (In progress)
+- AZ-800 — Microsoft (In progress)
+- AZ-801 — Microsoft (In progress)
+- RHCE — Red Hat (In progress)
+- Ethical Hacking & Cybersecurity — SMEClabs (In progress)
+
+## Labs and achievements
+
+- Hands-on Security Labs —  (Hands-on lab)
+  Practical work in virtualised environments with Kali Linux, intentionally vulnerable machines and network monitoring — the lab side of the security training.
+
+## FAQ
+
+### Who is Vishnu Anilkumar?
+
+Vishnu Anilkumar is a BCA graduate and cybersecurity student with a background in software development, now focused on ethical hacking, threat intelligence, and security operations.
+
+### What does Vishnu Anilkumar specialize in?
+
+His current focus areas are networking, Linux, penetration testing, threat intelligence, security monitoring, and AI-assisted security systems, with the long-term goal of working as a cybersecurity analyst (SOC Analyst).
+
+### What cybersecurity projects has Vishnu Anilkumar built?
+
+Ongoing security-focused projects include a Threat Intelligence Dashboard, an AI security platform (ASI) combining cameras, sensors, and AI analysis, and an AI-based property security and sensor fusion project. The projects section has the full details.
+
+### What technologies does Vishnu Anilkumar use?
+
+Python, Django, Flask, and JavaScript for development; Nmap, Wireshark, Burp Suite, Metasploit, and Kali Linux for security work; and Python-based AI/ML tools including scikit-learn, OpenAI APIs, and Whisper.
+
+### What is Vishnu Anilkumar currently learning?
+
+He's currently working through training in a Professional Diploma in Cyber Security, CompTIA Network+ and CySA+, CCNA, and RHCE, alongside hands-on practice in penetration testing and AI-assisted security systems. These are training in progress, not completed certifications.
+
+### How can Vishnu Anilkumar be contacted?
+
+By email at vishnuanil2k05@gmail.com, or via GitHub and LinkedIn. The contact section has a form as well.
+
+## Contact
+
+Email: vishnuanil2k05@gmail.com
+
