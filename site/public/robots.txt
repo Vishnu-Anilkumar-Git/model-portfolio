@@ -1,0 +1,6 @@
+User-agent: *
+Allow: /
+Disallow: /admin/
+Disallow: /control/
+
+Sitemap: https://vishnuanilkumar.in/sitemap.xml

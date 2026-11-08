@@ -4,8 +4,10 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <!-- CSP: unsafe-eval is retained for the Three.js r128 hero animation. Do not remove
-     without live-testing the site with it dropped first — see SEO changelog. -->
-<meta http-equiv="Content-Security-Policy" content="default-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdnjs.cloudflare.com https://fonts.googleapis.com https://fonts.gstatic.com data:; img-src 'self' data:; object-src 'none'; base-uri 'self'; frame-ancestors 'none';">
+     without live-testing the site with it dropped first — see SEO changelog.
+     connect-src allows the dev Django API (127.0.0.1:8000 / localhost:8000) and the
+     production API (api.vishnuanilkumar.in) used by the environment-aware chatbot fetch. -->
+<meta http-equiv="Content-Security-Policy" content="default-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdnjs.cloudflare.com https://fonts.googleapis.com https://fonts.gstatic.com data:; img-src 'self' data:; connect-src 'self' http://127.0.0.1:8000 http://localhost:8000 https://api.vishnuanilkumar.in; object-src 'none'; base-uri 'self'; frame-ancestors 'none';">
 <meta name="referrer" content="no-referrer">
 <meta name="robots" content="index, follow">
 <meta name="author" content="Vishnu Anilkumar">
@@ -41,15 +43,21 @@
 <link rel="icon" type="image/png" sizes="32x32" href="/assets/favicon/favicon-32x32.png">
 <link rel="apple-touch-icon" href="/assets/favicon/apple-touch-icon.png">
 
+<!-- Person schema: only verified fields present elsewhere in this document -->
 <script type="application/ld+json">
 {
   "@context": "https://schema.org",
   "@type": "Person",
   "name": "Vishnu Anilkumar",
   "url": "https://vishnuanilkumar.in/",
+  "image": "https://vishnuanilkumar.in/assets/images/og-cover.jpg",
   "jobTitle": "Cybersecurity Student",
   "description": "BCA graduate and cybersecurity student aspiring to become a SOC Analyst, with interests in ethical hacking, threat intelligence, security operations, and AI-assisted security systems.",
   "email": "mailto:vishnuanil2k05@gmail.com",
+  "alumniOf": {
+    "@type": "CollegeOrUniversity",
+    "name": "BVM Holy Cross College, Cherpunkal"
+  },
   "sameAs": [
     "https://github.com/Vishnu-Anilkumar-Git",
     "https://www.linkedin.com/in/vishnu-anilkumar-1083b038b"
@@ -74,6 +82,63 @@
   "@type": "WebSite",
   "name": "Vishnu Anilkumar | Cybersecurity Portfolio",
   "url": "https://vishnuanilkumar.in/"
+}
+</script>
+<!-- FAQPage schema: mirrors the visible FAQ section content exactly. -->
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {
+      "@type": "Question",
+      "name": "Who is Vishnu Anilkumar?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Vishnu Anilkumar is a BCA graduate and cybersecurity student with a background in software development, now focused on ethical hacking, threat intelligence, and security operations."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "What does Vishnu Anilkumar specialize in?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "His current focus areas are networking, Linux, penetration testing, threat intelligence, security monitoring, and AI-assisted security systems, with the long-term goal of working as a cybersecurity analyst (SOC Analyst)."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "What cybersecurity projects has Vishnu Anilkumar built?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Ongoing security-focused projects include a Threat Intelligence Dashboard, an AI security platform (ASI) combining cameras, sensors, and AI analysis, and an AI-based property security and sensor fusion project. See the Projects section for full details."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "What technologies does Vishnu Anilkumar use?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Python, Django, Flask, and JavaScript for development; Nmap, Wireshark, Burp Suite, Metasploit, and Kali Linux for security work; and Python-based AI/ML tools including scikit-learn, OpenAI APIs, and Whisper."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "What is Vishnu Anilkumar currently learning?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "He's currently working through training in a Professional Diploma in Cyber Security, CompTIA Network+ and CySA+, CCNA, and RHCE, alongside hands-on practice in penetration testing and AI-assisted security systems. These are training in progress, not completed certifications."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "How can Vishnu Anilkumar be contacted?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "By email at vishnuanil2k05@gmail.com, or via GitHub and LinkedIn — links are in the Contact section."
+      }
+    }
+  ]
 }
 </script>
 <style>
@@ -104,7 +169,17 @@
   }
   .skip-link:focus{ top:12px; }
 
-  a:focus-visible, button:focus-visible, .tab-btn:focus-visible{
+  .visually-hidden{
+    position:absolute !important;
+    width:1px; height:1px;
+    padding:0; margin:-1px;
+    overflow:hidden;
+    clip:rect(0,0,0,0);
+    white-space:nowrap;
+    border:0;
+  }
+
+  a:focus-visible, button:focus-visible, .tab-btn:focus-visible, input:focus-visible{
     outline:2px solid var(--accent); outline-offset:3px;
   }
   body{
@@ -228,7 +303,7 @@
   .card.show{ display:flex; }
   .card:hover{ background:var(--bg-alt); }
   .card-top{ display:flex; justify-content:space-between; align-items:flex-start; gap:12px; }
-  .card h4{ font-family:var(--mono); font-size:16px; font-weight:600; line-height:1.35; }
+  .card h3{ font-family:var(--mono); font-size:16px; font-weight:600; line-height:1.35; }
   .status-badge{
     font-family:var(--mono); font-size:10px; text-transform:uppercase; letter-spacing:0.08em; padding:4px 10px;
     white-space:nowrap; border:1px solid;
@@ -288,6 +363,151 @@
     .nav-links{ display:none; }
     .contact-panel{ padding:32px; }
     section{ padding:80px 0; }
+  }
+
+  /* CHATBOT */
+  #chatbot-toggle {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    background: var(--accent-2);
+    color: #0B0E11;
+    border: none;
+    width: 50px;
+    height: 50px;
+    border-radius: 25px;
+    font-size: 1.5rem;
+    cursor: pointer;
+    z-index: 9998;
+    box-shadow: 0 4px 15px rgba(62,214,181,0.3);
+    transition: transform 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  #chatbot-toggle:hover{ transform: scale(1.05); }
+
+  #chatbot-container {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    width: 360px;
+    max-width: calc(100vw - 24px);
+    height: 480px;
+    max-height: calc(100vh - 40px);
+    background: rgba(10, 10, 10, 0.97);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    display: none;
+    flex-direction: column;
+    z-index: 9999;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.8), 0 0 15px rgba(62,214,181,0.1);
+    font-family: var(--mono);
+    overflow: hidden;
+  }
+  #chatbot-header {
+    background: var(--accent-2-soft);
+    border-bottom: 1px solid var(--line);
+    padding: 12px 15px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    color: var(--accent-2);
+    font-size: 0.9rem;
+    font-weight: 600;
+  }
+  #chatbot-header button {
+    background: none;
+    border: none;
+    color: var(--text-dim);
+    cursor: pointer;
+    font-size: 1.2rem;
+    transition: color 0.2s;
+    line-height: 1;
+    padding: 4px;
+  }
+  #chatbot-header button:hover{ color: var(--text); }
+  #chatbot-messages {
+    flex: 1;
+    overflow-y: auto;
+    padding: 15px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .chat-msg {
+    max-width: 85%;
+    padding: 8px 12px;
+    border-radius: 8px;
+    font-size: 0.85rem;
+    line-height: 1.4;
+    word-wrap: break-word;
+    white-space: pre-wrap;
+  }
+  .chat-msg.bot {
+    background: var(--accent-2-soft);
+    border: 1px solid rgba(62,214,181,0.2);
+    align-self: flex-start;
+    color: var(--text);
+  }
+  .chat-msg.user {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid var(--line);
+    align-self: flex-end;
+    color: var(--text);
+  }
+  .chat-msg.error{
+    border-color: rgba(255,92,92,0.4);
+    color: var(--text);
+  }
+  #chatbot-input-area {
+    display: flex;
+    padding: 10px;
+    border-top: 1px solid var(--line);
+    background: rgba(0, 0, 0, 0.5);
+    gap: 6px;
+  }
+  #chatbot-input {
+    flex: 1;
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    color: var(--text);
+    font-family: inherit;
+    font-size: 0.85rem;
+    padding: 8px 10px;
+    outline: none;
+  }
+  #chatbot-input:disabled{ opacity:0.6; }
+  #chatbot-send {
+    background: none;
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    color: var(--accent-2);
+    cursor: pointer;
+    font-family: inherit;
+    font-weight: 600;
+    padding: 0 14px;
+    transition: all 0.2s;
+  }
+  #chatbot-send:hover:not(:disabled){ border-color: var(--accent-2); }
+  #chatbot-send:disabled{ opacity:0.5; cursor:not-allowed; }
+  .typing-indicator {
+    color: var(--text-faint);
+    font-size: 0.8rem;
+    align-self: flex-start;
+    padding: 0 15px;
+    display: none;
+  }
+
+  @media (max-width:480px){
+    #chatbot-container{
+      right: 12px;
+      left: 12px;
+      width: auto;
+      bottom: 12px;
+    }
+    #chatbot-toggle{ right: 12px; bottom: 12px; }
   }
 </style>
 </head>
@@ -416,69 +636,69 @@
 
       <!-- COMPLETED -->
       <div class="card show" data-status="completed">
-        <div class="card-top"><h4>CarePlus — Hospital Appointment Booking System</h4><span class="status-badge completed">Completed</span></div>
+        <div class="card-top"><h3>CarePlus — Hospital Appointment Booking System</h3><span class="status-badge completed">Completed</span></div>
         <p class="desc">A full-stack hospital appointment management platform to manage patients, doctors, appointments, and administrative workflows.</p>
         <div class="tech-row"><span class="tech-chip">PHP</span><span class="tech-chip">MariaDB</span></div>
       </div>
       <div class="card show" data-status="completed">
-        <div class="card-top"><h4>Kerala Tourism Website</h4><span class="status-badge completed">Completed</span></div>
+        <div class="card-top"><h3>Kerala Tourism Website</h3><span class="status-badge completed">Completed</span></div>
         <p class="desc">A tourism platform showcasing Kerala's destinations, attractions, and travel information with a dynamic backend.</p>
         <div class="tech-row"><span class="tech-chip">Django</span><span class="tech-chip">Python</span></div>
       </div>
       <div class="card show" data-status="completed">
-        <div class="card-top"><h4>Precision Builders — Intelligent Construction Platform</h4><span class="status-badge completed">Completed</span></div>
+        <div class="card-top"><h3>Precision Builders — Intelligent Construction Platform</h3><span class="status-badge completed">Completed</span></div>
         <p class="desc">A construction collaboration platform combining project management with ML-based cost and time prediction to assist planning.</p>
         <div class="tech-row"><span class="tech-chip">Python</span><span class="tech-chip">Django</span><span class="tech-chip">Machine Learning</span><span class="tech-chip">SQLite</span></div>
       </div>
 
       <!-- ONGOING -->
       <div class="card" data-status="ongoing">
-        <div class="card-top"><h4>OffGrid — E-Commerce Clothing Store</h4><span class="status-badge ongoing">Ongoing</span></div>
+        <div class="card-top"><h3>OffGrid — E-Commerce Clothing Store</h3><span class="status-badge ongoing">Ongoing</span></div>
         <p class="desc">A full-featured Django clothing store: product management, filtering, sorting, stock indicators, reviews, ratings, coupons, delivery estimates, and Razorpay payments.</p>
         <div class="progress"><div class="progress-fill" style="width:75%"></div></div>
         <div class="progress-label">75% complete</div>
         <div class="tech-row"><span class="tech-chip">Python</span><span class="tech-chip">Django</span><span class="tech-chip">PostgreSQL/MySQL</span><span class="tech-chip">Razorpay</span></div>
       </div>
       <div class="card" data-status="ongoing">
-        <div class="card-top"><h4>ASI — AI Security Platform</h4><span class="status-badge ongoing">Ongoing</span></div>
+        <div class="card-top"><h3>ASI — AI Security Platform</h3><span class="status-badge ongoing">Ongoing</span></div>
         <p class="desc">An intelligent physical-security platform combining cameras, sensors, and network monitoring to detect suspicious activity and generate alerts.</p>
         <div class="tech-row"><span class="tech-chip">Python</span><span class="tech-chip">AI/ML</span><span class="tech-chip">Computer Vision</span><span class="tech-chip">Raspberry Pi</span></div>
       </div>
       <div class="card" data-status="ongoing">
-        <div class="card-top"><h4>Threat Intelligence Dashboard</h4><span class="status-badge ongoing">Ongoing</span></div>
+        <div class="card-top"><h3>Threat Intelligence Dashboard</h3><span class="status-badge ongoing">Ongoing</span></div>
         <p class="desc">A security dashboard for collecting, processing, and visualizing threat intel — helping analysts monitor IOCs, suspicious infrastructure, and emerging threats.</p>
         <div class="tech-row"><span class="tech-chip">Python</span><span class="tech-chip">Threat Intel APIs</span></div>
       </div>
       <div class="card" data-status="ongoing">
-        <div class="card-top"><h4>JARVIS — Personal AI Assistant</h4><span class="status-badge ongoing">Ongoing</span></div>
+        <div class="card-top"><h3>JARVIS — Personal AI Assistant</h3><span class="status-badge ongoing">Ongoing</span></div>
         <p class="desc">A local personal AI assistant focused on natural voice interaction, speech recognition, and future integration with security workflows.</p>
         <div class="tech-row"><span class="tech-chip">Python</span><span class="tech-chip">Faster-Whisper</span><span class="tech-chip">Silero VAD</span><span class="tech-chip">LLMs</span></div>
       </div>
       <div class="card" data-status="ongoing">
-        <div class="card-top"><h4>AI-Based Property Security &amp; Sensor Fusion</h4><span class="status-badge ongoing">Ongoing</span></div>
+        <div class="card-top"><h3>AI-Based Property Security &amp; Sensor Fusion</h3><span class="status-badge ongoing">Ongoing</span></div>
         <p class="desc">Research combining cameras, mmWave radar, and sensors with AI to identify meaningful human movement vs. normal environmental activity.</p>
         <div class="tech-row"><span class="tech-chip">AI/ML</span><span class="tech-chip">mmWave Radar</span><span class="tech-chip">Raspberry Pi</span><span class="tech-chip">Sensor Fusion</span></div>
       </div>
 
       <!-- UPCOMING -->
       <div class="card" data-status="upcoming">
-        <div class="card-top"><h4>CTI Platform</h4><span class="status-badge upcoming">Upcoming</span></div>
+        <div class="card-top"><h3>CTI Platform</h3><span class="status-badge upcoming">Upcoming</span></div>
         <p class="desc">A complete cyber threat intelligence platform for collecting, correlating, analyzing, and visualizing threats with automated IOC enrichment.</p>
       </div>
       <div class="card" data-status="upcoming">
-        <div class="card-top"><h4>AI SOC Analyst</h4><span class="status-badge upcoming">Upcoming</span></div>
+        <div class="card-top"><h3>AI SOC Analyst</h3><span class="status-badge upcoming">Upcoming</span></div>
         <p class="desc">An AI-assisted SOC platform to analyze security events, prioritize alerts, correlate indicators, and assist analysts with investigation.</p>
       </div>
       <div class="card" data-status="upcoming">
-        <div class="card-top"><h4>Advanced Network Security Monitoring System</h4><span class="status-badge upcoming">Upcoming</span></div>
+        <div class="card-top"><h3>Advanced Network Security Monitoring System</h3><span class="status-badge upcoming">Upcoming</span></div>
         <p class="desc">Real-time network monitoring and threat detection capable of identifying suspicious traffic and anomalous behavior.</p>
       </div>
       <div class="card" data-status="upcoming">
-        <div class="card-top"><h4>Automated Vulnerability Assessment Platform</h4><span class="status-badge upcoming">Upcoming</span></div>
+        <div class="card-top"><h3>Automated Vulnerability Assessment Platform</h3><span class="status-badge upcoming">Upcoming</span></div>
         <p class="desc">A platform to automate reconnaissance, vulnerability discovery, service enumeration, and reporting across authorized systems.</p>
       </div>
       <div class="card" data-status="upcoming">
-        <div class="card-top"><h4>AI-Powered Digital Security Lab</h4><span class="status-badge upcoming">Upcoming</span></div>
+        <div class="card-top"><h3>AI-Powered Digital Security Lab</h3><span class="status-badge upcoming">Upcoming</span></div>
         <p class="desc">A personal cybersecurity lab: virtualized environments, Kali Linux, vulnerable machines, network monitoring, and AI-assisted experimentation.</p>
       </div>
 
@@ -573,6 +793,25 @@
     </div>
   </div>
 </footer>
+
+<!-- Chatbot UI: single floating launcher + window. Talks only to the Django API — never to Ollama directly. -->
+<button id="chatbot-toggle" aria-label="Open Vishnu AI Assistant" aria-haspopup="dialog" aria-expanded="false">💬</button>
+
+<div id="chatbot-container" role="dialog" aria-label="Vishnu AI Assistant" aria-hidden="true">
+  <div id="chatbot-header">
+    <span id="chatbot-title">Vishnu AI Assistant</span>
+    <button id="chatbot-close" aria-label="Close Vishnu AI Assistant">×</button>
+  </div>
+  <div id="chatbot-messages" role="log" aria-live="polite" aria-label="Conversation with Vishnu's AI assistant">
+    <!-- Messages appended here -->
+  </div>
+  <div id="chatbot-typing" class="typing-indicator" aria-live="polite">Typing…</div>
+  <div id="chatbot-input-area">
+    <label for="chatbot-input" class="visually-hidden">Ask Vishnu's AI assistant a question</label>
+    <input type="text" id="chatbot-input" placeholder="Ask about Vishnu..." autocomplete="off" aria-label="Ask Vishnu's AI assistant a question">
+    <button id="chatbot-send" aria-label="Send message">Send</button>
+  </div>
+</div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script>
@@ -722,225 +961,134 @@
       renderer.setSize(window.innerWidth, window.innerHeight);
     });
   })();
-</script>
-<!-- Chatbot UI -->
-<style>
-  #chatbot-container {
-    position: fixed;
-    bottom: 20px;
-    right: 20px;
-    width: 350px;
-    height: 450px;
-    background: rgba(10, 10, 10, 0.95);
-    border: 1px solid rgba(0, 255, 128, 0.3);
-    border-radius: 12px;
-    display: none;
-    flex-direction: column;
-    z-index: 9999;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.8), 0 0 15px rgba(0, 255, 128, 0.1);
-    font-family: 'IBM Plex Mono', monospace;
-    overflow: hidden;
-  }
-  #chatbot-header {
-    background: rgba(0, 255, 128, 0.1);
-    border-bottom: 1px solid rgba(0, 255, 128, 0.2);
-    padding: 12px 15px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    color: #00ff80;
-    font-size: 0.9rem;
-    font-weight: 600;
-  }
-  #chatbot-header button {
-    background: none;
-    border: none;
-    color: #888;
-    cursor: pointer;
-    font-size: 1.2rem;
-    transition: color 0.2s;
-  }
-  #chatbot-header button:hover {
-    color: #fff;
-  }
-  #chatbot-messages {
-    flex: 1;
-    overflow-y: auto;
-    padding: 15px;
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-  }
-  .chat-msg {
-    max-width: 85%;
-    padding: 8px 12px;
-    border-radius: 8px;
-    font-size: 0.85rem;
-    line-height: 1.4;
-    word-wrap: break-word;
-  }
-  .chat-msg.bot {
-    background: rgba(0, 255, 128, 0.1);
-    border: 1px solid rgba(0, 255, 128, 0.2);
-    align-self: flex-start;
-    color: #e0e0e0;
-  }
-  .chat-msg.user {
-    background: rgba(255, 255, 255, 0.05);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    align-self: flex-end;
-    color: #fff;
-  }
-  #chatbot-input-area {
-    display: flex;
-    padding: 10px;
-    border-top: 1px solid rgba(255, 255, 255, 0.1);
-    background: rgba(0, 0, 0, 0.5);
-  }
-  #chatbot-input {
-    flex: 1;
-    background: none;
-    border: none;
-    color: #fff;
-    font-family: inherit;
-    font-size: 0.85rem;
-    padding: 8px;
-    outline: none;
-  }
-  #chatbot-send {
-    background: none;
-    border: none;
-    color: #00ff80;
-    cursor: pointer;
-    font-family: inherit;
-    font-weight: 600;
-    padding: 0 10px;
-    transition: color 0.2s;
-  }
-  #chatbot-send:hover {
-    color: #fff;
-  }
-  #chatbot-toggle {
-    position: fixed;
-    bottom: 20px;
-    right: 20px;
-    background: #00ff80;
-    color: #000;
-    border: none;
-    width: 50px;
-    height: 50px;
-    border-radius: 25px;
-    font-size: 1.5rem;
-    cursor: pointer;
-    z-index: 9998;
-    box-shadow: 0 4px 15px rgba(0, 255, 128, 0.3);
-    transition: transform 0.2s;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
-  #chatbot-toggle:hover {
-    transform: scale(1.05);
-  }
-  .typing-indicator {
-    color: #888;
-    font-size: 0.8rem;
-    align-self: flex-start;
-    padding: 0 15px;
-    display: none;
-  }
-</style>
 
-<button id="chatbot-toggle">💬</button>
+  // ---- Chatbot: talks only to the Django API (never to Ollama directly) ----
+  (function () {
+    const API_BASE_URL =
+      window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+        ? 'http://127.0.0.1:8000'
+        : 'https://api.vishnuanilkumar.in';
 
-<div id="chatbot-container">
-  <div id="chatbot-header">
-    <span>Vishnu AI Assistant</span>
-    <button id="chatbot-close">×</button>
-  </div>
-  <div id="chatbot-messages">
-    <!-- Messages appended here -->
-  </div>
-  <div id="chatbot-typing" class="typing-indicator">Typing...</div>
-  <div id="chatbot-input-area">
-    <input type="text" id="chatbot-input" placeholder="Ask about Vishnu..." autocomplete="off">
-    <button id="chatbot-send">Send</button>
-  </div>
-</div>
+    const CHATBOT_ENDPOINT = `${API_BASE_URL}/api/v1/chatbot/`;
+    const REQUEST_TIMEOUT_MS = 15000;
 
-<script>
-  const toggleBtn = document.getElementById('chatbot-toggle');
-  const chatContainer = document.getElementById('chatbot-container');
-  const closeBtn = document.getElementById('chatbot-close');
-  const messagesDiv = document.getElementById('chatbot-messages');
-  const inputField = document.getElementById('chatbot-input');
-  const sendBtn = document.getElementById('chatbot-send');
-  const typingIndicator = document.getElementById('chatbot-typing');
-  
-  let initialized = false;
+    const toggleBtn = document.getElementById('chatbot-toggle');
+    const chatContainer = document.getElementById('chatbot-container');
+    const closeBtn = document.getElementById('chatbot-close');
+    const messagesDiv = document.getElementById('chatbot-messages');
+    const inputField = document.getElementById('chatbot-input');
+    const sendBtn = document.getElementById('chatbot-send');
+    const typingIndicator = document.getElementById('chatbot-typing');
 
-  const appendMessage = (text, sender) => {
-    const msgDiv = document.createElement('div');
-    msgDiv.classList.add('chat-msg', sender);
-    msgDiv.textContent = text;
-    messagesDiv.appendChild(msgDiv);
-    messagesDiv.scrollTop = messagesDiv.scrollHeight;
-  };
+    let initialized = false;
+    let isSending = false;
 
-  const handleOpen = () => {
-    chatContainer.style.display = 'flex';
-    toggleBtn.style.display = 'none';
-    if (!initialized) {
-      appendMessage("Hello. I'm Vishnu's AI assistant.", 'bot');
-      initialized = true;
-    }
-  };
+    const appendMessage = (text, sender) => {
+      const msgDiv = document.createElement('div');
+      msgDiv.classList.add('chat-msg', sender === 'error' ? 'bot' : sender);
+      if (sender === 'error') msgDiv.classList.add('error');
+      msgDiv.textContent = text; // never innerHTML — user/backend text is never parsed as HTML
+      messagesDiv.appendChild(msgDiv);
+      messagesDiv.scrollTop = messagesDiv.scrollHeight;
+    };
 
-  const handleClose = () => {
-    chatContainer.style.display = 'none';
-    toggleBtn.style.display = 'flex';
-  };
+    const setSendingState = (sending) => {
+      isSending = sending;
+      sendBtn.disabled = sending;
+      inputField.disabled = sending;
+      typingIndicator.style.display = sending ? 'block' : 'none';
+    };
 
-  const sendMessage = async () => {
-    const text = inputField.value.trim();
-    if (!text) return;
-    
-    appendMessage(text, 'user');
-    inputField.value = '';
-    
-    typingIndicator.style.display = 'block';
-    
-    try {
-      const response = await fetch('http://127.0.0.1:8000/api/v1/chatbot/', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ message: text })
-      });
-      
-      const data = await response.json();
-      typingIndicator.style.display = 'none';
-      
-      if (response.ok && data.answer) {
-        appendMessage(data.answer, 'bot');
-      } else {
-        appendMessage(data.error || "Sorry, I couldn't process that request.", 'bot');
+    const handleOpen = () => {
+      chatContainer.style.display = 'flex';
+      chatContainer.setAttribute('aria-hidden', 'false');
+      toggleBtn.setAttribute('aria-expanded', 'true');
+      toggleBtn.style.display = 'none';
+      if (!initialized) {
+        // Greeting is local UI only — never sent to the backend.
+        appendMessage("Hello. I'm Vishnu's AI assistant.", 'bot');
+        initialized = true;
       }
-    } catch (err) {
-      typingIndicator.style.display = 'none';
-      appendMessage("Network error. Please try again later.", 'bot');
-    }
-  };
+      inputField.focus();
+    };
 
-  toggleBtn.addEventListener('click', handleOpen);
-  closeBtn.addEventListener('click', handleClose);
-  sendBtn.addEventListener('click', sendMessage);
-  inputField.addEventListener('keypress', (e) => {
-    if (e.key === 'Enter') sendMessage();
-  });
+    const handleClose = () => {
+      chatContainer.style.display = 'none';
+      chatContainer.setAttribute('aria-hidden', 'true');
+      toggleBtn.style.display = 'flex';
+      toggleBtn.setAttribute('aria-expanded', 'false');
+      toggleBtn.focus();
+    };
+
+    const sendMessage = async () => {
+      if (isSending) return;
+      const text = inputField.value.trim();
+      if (!text) return;
+
+      appendMessage(text, 'user');
+      inputField.value = '';
+      setSendingState(true);
+
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
+
+      try {
+        const response = await fetch(CHATBOT_ENDPOINT, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ message: text }),
+          signal: controller.signal
+        });
+
+        clearTimeout(timeoutId);
+
+        if (response.status === 429) {
+          appendMessage("You're sending messages too quickly. Please wait a moment and try again.", 'error');
+          return;
+        }
+
+        if (!response.ok) {
+          // Covers 400/500 and anything else — never expose server details.
+          appendMessage("Sorry, I couldn't connect to Vishnu's AI assistant right now.", 'error');
+          return;
+        }
+
+        let data;
+        try {
+          data = await response.json();
+        } catch (parseErr) {
+          appendMessage("Sorry, I couldn't connect to Vishnu's AI assistant right now.", 'error');
+          return;
+        }
+
+        if (data && typeof data.answer === 'string' && data.answer.trim().length > 0) {
+          appendMessage(data.answer, 'bot');
+        } else {
+          appendMessage("Sorry, I couldn't connect to Vishnu's AI assistant right now.", 'error');
+        }
+      } catch (err) {
+        clearTimeout(timeoutId);
+        if (err && err.name === 'AbortError') {
+          appendMessage('Sorry, the assistant took too long to respond. Please try again.', 'error');
+        } else {
+          appendMessage("Sorry, I couldn't connect to Vishnu's AI assistant right now.", 'error');
+        }
+      } finally {
+        setSendingState(false);
+      }
+    };
+
+    toggleBtn.addEventListener('click', handleOpen);
+    closeBtn.addEventListener('click', handleClose);
+    sendBtn.addEventListener('click', sendMessage);
+    inputField.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') { e.preventDefault(); sendMessage(); }
+    });
+    chatContainer.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') handleClose();
+    });
+  })();
 </script>
 
 </body>
 </html>
-
