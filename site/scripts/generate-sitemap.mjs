@@ -9,7 +9,7 @@
 import { existsSync, writeFileSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { API_BASE, isStrictBuild } from "./content.mjs";
+import { API_BASE, getJson, isStrictBuild } from "./content.mjs";
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const publicDir = path.resolve(here, "../public");
@@ -32,12 +32,9 @@ async function main() {
   let projects = null;
 
   try {
-    const response = await fetch(`${apiBase}/site/`, {
-      signal: AbortSignal.timeout(8000),
-      headers: { Accept: "application/json" },
-    });
-    if (!response.ok) throw new Error(`HTTP ${response.status}`);
-    const data = await response.json();
+    // Shared helper: waits for a sleeping API and logs "waiting for API to wake"
+    // instead of failing on the first cold-start timeout.
+    const data = await getJson("/site/");
     projects = Array.isArray(data.projects) ? data.projects : [];
     if (!explicitOrigin && data?.seo?.canonical) {
       origin = new URL(data.seo.canonical).origin;

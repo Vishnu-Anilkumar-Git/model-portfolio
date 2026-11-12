@@ -72,7 +72,7 @@ Set these in the host's secret store, not in the repository.
 | `CSRF_TRUSTED_ORIGINS` | `https://api.vishnuanilkumar.in` | Only needed for the Django admin over HTTPS. |
 | `SITE_URL` | `https://vishnuanilkumar.in` | Canonical links and chatbot source chips. |
 | `ADMIN_URL` | `https://admin.vishnuanilkumar.in` | Used for admin links in notifications. |
-| `SITE_REBUILD_HOOK_URL` | build-hook URL | Optional. Server-side only. When set, published content writes and the admin **Publish site** button POST to it. Leave unset to disable automatic publishing. Never expose this as a `VITE_*` variable. |
+| `SITE_REBUILD_HOOK_URL` | Vercel Deploy Hook URL | Optional. Server-side secret. When set, published content writes and the admin **Publish site** button POST to it (empty body). Unset disables automatic publishing and logs `auto-publish disabled` at startup. Revocable in Vercel. Never expose this as a `VITE_*` variable. |
 | `NUM_PROXIES` | `1` | Render/Railway sit behind one proxy. Adjust only if the topology changes; otherwise throttling uses the wrong IP. |
 | `SECURE_SSL_REDIRECT` | unset | Defaults to `True` when `DEBUG=False`. |
 | `SERVE_MEDIA` | `True` | Keep until uploads move to object storage. |
@@ -127,6 +127,8 @@ npm run build
 
 The build runs `scripts/generate-sitemap.mjs` first. It fetches the deployed `/api/v1/site/` payload and writes `public/sitemap.xml` and `public/robots.txt`, so **deploy the API before building the site**. In CI/production (`CI=true`, `NODE_ENV=production`, `NETLIFY`, `CF_PAGES` or `VERCEL`), an unreachable API aborts the build with a non-zero exit instead of keeping a stale sitemap or pre-rendering stale pages. Only a local development build keeps the previous sitemap fallback.
 
+The API runs on Render's free plan and sleeps when idle, so the first request of a build can spend most of a minute waking it. Every generator (`content.mjs`, used by the sitemap, the `llms.txt` files and the pre-renderer) waits for it: **8 attempts**, each with a 12-second timeout and a 1.5-second pause (about 90–110 seconds worst case), logging `waiting for API to wake` between attempts. A 4xx response is not retried because the API is clearly awake. If the API never answers, the build **fails loudly** and Vercel does not publish — stale or empty pages never go live. Local development behaves the same way, minus the strictness: an unreachable API still aborts `npm run build`, and only the sitemap step keeps its development fallback.
+
 Deploy `site/dist` to Cloudflare Pages or Netlify with:
 
 - Build command: `npm ci && npm run build`
@@ -139,25 +141,35 @@ The CSP is injected into `index.html` at build time by `site/vite.config.ts` and
 
 ### Automatic rebuilds after content changes
 
-The public site is pre-rendered, so database edits only reach the deployed pages after a new site build. The API turns content changes into hosting build requests through a build hook:
+The public site is pre-rendered, so database edits only reach visitors after Vercel runs a new build. The API turns content changes into Vercel builds through a **Deploy Hook**.
 
-1. Create a deploy/build hook in the site host:
-   - **Netlify**: Site configuration → Build & deploy → Build hooks → Add build hook. Use the production branch.
-   - **Cloudflare Pages**: Settings → Builds & deployments → Deploy hooks → Add deploy hook. Use the production branch.
-   - **Vercel**: Settings → Git → Deploy Hooks. Use the production branch.
-2. Put the hook URL in the API host's secret store as `SITE_REBUILD_HOOK_URL`, then redeploy/restart the API. Do not put it in `site/.env`, `admin/.env`, or any `VITE_*` variable; the admin bundle is public.
-3. Leave the variable empty to disable the pipeline. The admin button shows that publishing is not configured, and content saves remain normal.
+#### Set up the Vercel Deploy Hook
 
-Once configured:
+1. In Vercel, open the project that builds `site/`, then **Project Settings → Git → Deploy Hooks**.
+2. Name the hook `portfolio content`, set the branch to `main`, and click **Create Hook**.
+3. Copy the generated URL. It looks like `https://api.vercel.com/v1/integrations/deploy/prj_…/…` and is a **secret**: anyone holding it can start builds on the project.
+4. Add it to the **API host's** environment (Render → the API service → Environment) as `SITE_REBUILD_HOOK_URL`, then redeploy or restart the API.
+5. Confirm the API startup log contains `auto-publish enabled: content changes request a site rebuild`. With the variable unset it logs `auto-publish disabled: SITE_REBUILD_HOOK_URL is not set …` instead, and content saves keep working with no rebuild.
 
-- A create, update or delete that can change the public output requests a rebuild **after the database commit**.
-- Automatic requests are coalesced for **60 seconds** across all Gunicorn workers, so several rapid edits produce one build, not one per field. The dashboard **Publish site** button is an explicit manual trigger and bypasses that wait.
-- Edits to hidden content do not trigger a build. Publishing or unpublishing a visible row does, as does editing a visible project, skill, screenshot of a visible project, or the always-published profile.
-- The hook POST runs on a daemon thread; the admin request returns without waiting for the hosting provider.
-- Success and failure are logged under the `content.rebuild` logger. The hook URL is never logged. A failed hook does not fail the admin save.
-- The dashboard's **Publish site** button posts to the same debounced hook and shows **last rebuild requested at**. Changes appear only after the host finishes the build.
+Vercel Deploy Hooks take an HTTP `POST` with an empty body, which is exactly what the API sends. Never put the URL in `site/.env.local`, `admin/.env.local`, a `VITE_*` variable or the repository: only the API process reads it, it is never logged, and no API response returns it. To revoke it, delete the hook in Vercel and clear or rotate the variable.
 
-To test the pipeline locally, point `SITE_REBUILD_HOOK_URL` at any local HTTP receiver, save a visible project, and confirm one POST arrives. Saving a hidden project should produce none. The hook URL is optional; all backend tests run with it unset.
+#### What triggers a build
+
+- A create, update or delete that changes the public output requests a rebuild **after the database transaction commits**, so a rolled-back edit never publishes.
+- Automatic requests are coalesced for **60 seconds**: several rapid edits produce exactly one POST. The claim lives in the database (`content_siterebuild`), so it survives restarts and still holds if the API later runs more than one worker.
+- Saves that change nothing the site renders are ignored, as are edits to hidden content (a hidden project, skill, or a screenshot of a hidden project). Publishing or unpublishing a visible row does request a build, as does editing the always-published profile.
+- Contact messages, chat logs, audit logs and user/token tables never trigger a build.
+- `migrate` and `seed_portfolio` are suppressed, so a deploy that seeds content cannot start a rebuild loop.
+- The POST runs on a daemon thread with a **10-second timeout and one retry** on a network failure. An admin save never waits for Vercel, and a hook failure is logged without failing the save.
+- Outcomes are logged under the `content.rebuild` logger: `requested`, `debounced`, `skipped`, or `hook failed status=…`. The URL itself never appears in a log line.
+
+#### The admin control
+
+The dashboard shows **Last rebuild requested at <time>** and a **Publish site** button. The button calls `POST /api/v1/admin/publish/` (staff only, throttled to **6/hour**), which requests a build immediately instead of waiting for the 60-second window and reports the outcome. The timestamp is stored in the database, so it survives restarts.
+
+Changes appear on the public site **1-2 minutes after a rebuild starts**: Vercel queues the build, the build waits for the sleeping API, pre-renders every route and deploys.
+
+To test the pipeline locally, point `SITE_REBUILD_HOOK_URL` at any local HTTP receiver, save a visible project, and confirm one POST arrives. Saving a hidden project should produce none. All backend tests run with the hook unset.
 
 ## 4. Admin panel
 

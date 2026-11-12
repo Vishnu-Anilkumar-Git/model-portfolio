@@ -37,33 +37,60 @@ export function isStrictBuild() {
   );
 }
 
-async function getJson(path, attempts = 3) {
+/**
+ * The API runs on a free host that sleeps when idle, so the first request of a
+ * build can spend most of a minute waking it. Wait for it instead of failing the
+ * deploy, but give up loudly if it never answers: a build must never publish
+ * stale or empty pages. Worst case is roughly 8 x 12s plus the pauses.
+ */
+const WAKE_ATTEMPTS = 8;
+const WAKE_TIMEOUT_MS = 12000;
+const WAKE_PAUSE_MS = 1500;
+const RETRYABLE_STATUS = new Set([408, 425, 429, 500, 502, 503, 504]);
+
+async function fetchJsonOnce(path) {
+  const response = await fetch(`${API_BASE}${path}`, {
+    signal: AbortSignal.timeout(WAKE_TIMEOUT_MS),
+    headers: { Accept: "application/json" },
+  });
+
+  if (!response.ok) {
+    const error = new Error(
+      `GET ${API_BASE}${path} returned HTTP ${response.status}`,
+    );
+    // A 4xx means the API is awake and answered; waiting will not help.
+    error.retryable =
+      RETRYABLE_STATUS.has(response.status) || response.status >= 500;
+    throw error;
+  }
+
+  return response.json();
+}
+
+export async function getJson(path, attempts = WAKE_ATTEMPTS) {
   let lastError;
 
   for (let attempt = 1; attempt <= attempts; attempt += 1) {
     try {
-      const response = await fetch(`${API_BASE}${path}`, {
-        signal: AbortSignal.timeout(15000),
-        headers: { Accept: "application/json" },
-      });
-
-      if (!response.ok) {
-        throw new Error(`GET ${API_BASE}${path} returned HTTP ${response.status}`);
-      }
-
-      return await response.json();
+      return await fetchJsonOnce(path);
     } catch (error) {
       lastError = error;
-      if (attempt < attempts) {
-        await new Promise((resolve) => setTimeout(resolve, 250 * attempt));
-      }
+      const message = error instanceof Error ? error.message : String(error);
+      const canRetry = error?.retryable !== false;
+
+      if (!canRetry || attempt === attempts) break;
+
+      console.warn(
+        `waiting for API to wake — ${message}; retrying (attempt ${attempt + 1}/${attempts})`,
+      );
+      await new Promise((resolve) => setTimeout(resolve, WAKE_PAUSE_MS));
     }
   }
 
   throw new Error(
     `API request failed: ${API_BASE}${path} (${
       lastError instanceof Error ? lastError.message : String(lastError)
-    })`,
+    }). The API never became reachable; refusing to publish stale content.`,
   );
 }
 

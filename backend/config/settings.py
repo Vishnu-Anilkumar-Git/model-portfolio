@@ -53,9 +53,10 @@ ALLOWED_HOSTS = get_list("ALLOWED_HOSTS", default="127.0.0.1,localhost,testserve
 SITE_URL = _config("SITE_URL", default="http://localhost:5173").rstrip("/")
 ADMIN_URL = _config("ADMIN_URL", default="http://localhost:5174").rstrip("/")
 
-# Hosting build hook (Netlify/Cloudflare Pages/Vercel). Empty disables the
-# publish pipeline entirely; the URL is a secret and must never reach a
-# VITE_* variable or the admin bundle.
+# Vercel Deploy Hook URL (Project Settings > Git > Deploy Hooks, branch main).
+# Called with an HTTP POST and an empty body after public content changes.
+# Empty disables the publish pipeline entirely; the URL is a secret, can be
+# revoked in Vercel, and must never reach a VITE_* variable or the admin bundle.
 SITE_REBUILD_HOOK_URL = _config("SITE_REBUILD_HOOK_URL", default="").strip()
 
 # Number of reverse proxies in front of Django. Set this to 1 on Render/Railway
@@ -219,6 +220,7 @@ REST_FRAMEWORK: dict[str, Any] = {
         "chat": "12/min",
         "contact": "5/hour",
         "login": "10/min",
+        "publish": "6/hour",
     },
     "DEFAULT_PAGINATION_CLASS": "rest_framework.pagination.PageNumberPagination",
     "PAGE_SIZE": 25,

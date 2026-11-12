@@ -141,7 +141,7 @@ export function Profile() {
       }
     },
     onSuccess: () => {
-      toast.push("Profile saved. The public site will pick it up on the next load.");
+      toast.push("Saved. The public site will refresh shortly.");
       setFiles({});
       void queryClient.invalidateQueries({ queryKey: ["profile"] });
       void queryClient.invalidateQueries({ queryKey: ["dashboard"] });
