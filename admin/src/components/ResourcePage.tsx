@@ -242,7 +242,7 @@ export function ResourcePage({ config }: { config: ResourceConfig }) {
       return savedId;
     },
     onSuccess: () => {
-      toast.push(`${config.singular[0].toUpperCase()}${config.singular.slice(1)} saved.`);
+      toast.push("Saved. The public site will refresh shortly.");
       setEditing(null);
       setFiles({});
       invalidate();
@@ -258,7 +258,7 @@ export function ResourcePage({ config }: { config: ResourceConfig }) {
   const deleteMutation = useMutation({
     mutationFn: async (row: Row) => api.remove(config.path, row.id as number),
     onSuccess: () => {
-      toast.push(`${config.singular[0].toUpperCase()}${config.singular.slice(1)} deleted.`);
+      toast.push("Deleted. The public site will refresh shortly.");
       setDeleteTarget(null);
       invalidate();
     },

@@ -40,7 +40,7 @@ from .models import (
     SocialLink,
     SuggestedQuestion,
 )
-from .rebuild import rebuild_status, request_site_rebuild
+from .publish import rebuild_status, request_site_rebuild
 from .seo import faq_schema, person_schema, website_schema
 from .sitemap import build_robots, build_sitemap
 from .serializers import (
@@ -678,18 +678,25 @@ class DashboardView(APIView):
 
 
 class PublishSiteView(APIView):
-    """Manual trigger for the same debounced hosting build hook."""
+    """Manual trigger for the same hosting build hook used by content signals."""
 
     permission_classes = [IsAdminUser]
+    throttle_classes = [ScopedRateThrottle]
+    throttle_scope = "publish"
 
     def post(self, request: Any) -> Response:
-        result = request_site_rebuild(force=True)
+        result = request_site_rebuild("admin_publish", force=True)
         messages = {
-            "requested": "Rebuild requested. Changes appear after the build finishes.",
+            "requested": (
+                "Rebuild requested. Changes appear on the public site 1-2 "
+                "minutes after the build starts."
+            ),
             "debounced": (
                 "A rebuild was requested recently. Wait for it to finish before "
                 "requesting another."
             ),
+            "queued": "Rebuild queued and sent once the current change commits.",
+            "suppressed": "Rebuilds are paused while a bulk content command runs.",
             "unset": "SITE_REBUILD_HOOK_URL is not configured, so nothing was sent.",
             "error": "Could not request a rebuild. Check the API logs.",
         }

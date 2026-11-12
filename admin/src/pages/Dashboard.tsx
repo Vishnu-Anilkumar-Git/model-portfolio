@@ -57,7 +57,7 @@ interface DashboardData {
 interface PublishResponse {
   requested: boolean;
   configured: boolean;
-  reason: "requested" | "debounced" | "unset" | "error";
+  reason: "requested" | "debounced" | "queued" | "suppressed" | "unset" | "error";
   last_requested_at: string | null;
   message: string;
 }
@@ -87,7 +87,9 @@ export function Dashboard() {
     mutationFn: () => api.post<PublishResponse>("/admin/publish/"),
     onSuccess: (result) => {
       const tone =
-        result.reason === "requested" || result.reason === "debounced"
+        result.reason === "requested" ||
+        result.reason === "debounced" ||
+        result.reason === "queued"
           ? "success"
           : "error";
       push(result.message, tone);
@@ -200,17 +202,18 @@ export function Dashboard() {
             </p>
             <p className="mt-2 font-mono text-[10.5px] tracking-wide text-fog/70 uppercase">
               {data.rebuild.last_requested_at ? (
-                <span title={new Date(data.rebuild.last_requested_at).toLocaleString()}>
-                  Last rebuild requested {timeAgo(data.rebuild.last_requested_at)}
+                <span title={timeAgo(data.rebuild.last_requested_at)}>
+                  Last rebuild requested at{" "}
+                  {new Date(data.rebuild.last_requested_at).toLocaleString()}
                 </span>
               ) : (
                 "No rebuild requested yet"
               )}
             </p>
             <p className="mt-1 text-[11.5px] text-fog/70">
-              Changes appear after the hosting build finishes. Automatic
-              rebuilds are debounced for 60 seconds; this button requests one
-              immediately.
+              Changes appear on the public site 1-2 minutes after a rebuild
+              starts. Automatic rebuilds are debounced for 60 seconds; this
+              button requests one immediately.
             </p>
             {!data.rebuild.configured && (
               <p className="mt-2 text-[11.5px] text-flame">

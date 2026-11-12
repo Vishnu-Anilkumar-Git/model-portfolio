@@ -25,6 +25,7 @@ from content.models import (
     SocialLink,
     SuggestedQuestion,
 )
+from content.publish import suppress_site_rebuilds
 
 PROFILE: dict[str, Any] = {
     "name": "Vishnu Anilkumar",
@@ -408,15 +409,18 @@ class Command(BaseCommand):
 
     @transaction.atomic
     def handle(self, *args: Any, **options: Any) -> None:
-        self._seed_profile()
-        self._seed_socials()
-        self._seed_skills()
-        self._seed_projects()
-        self._seed_certifications()
-        self._seed_education()
-        self._seed_achievements()
-        self._seed_faqs()
-        self._seed_suggestions()
+        # Seeding is a bulk write performed during a deploy: never request a
+        # site rebuild from it, or the deploy would trigger another build.
+        with suppress_site_rebuilds():
+            self._seed_profile()
+            self._seed_socials()
+            self._seed_skills()
+            self._seed_projects()
+            self._seed_certifications()
+            self._seed_education()
+            self._seed_achievements()
+            self._seed_faqs()
+            self._seed_suggestions()
         self.stdout.write(self.style.SUCCESS("Portfolio content seeded."))
         self.stdout.write(
             "Next: create an admin user with `python manage.py createsuperuser`."
